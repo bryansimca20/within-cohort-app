@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* WITHIN — monochrome tokens.
    Verbatim values from ../presentations/design-system/deck.css. No hue,
