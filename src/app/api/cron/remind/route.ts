@@ -12,8 +12,9 @@ import { sendPush } from '@/lib/push';
 // is the actual gate - Vercel sends it as a Bearer token automatically once
 // the env var is set on the project.
 export async function GET(request: Request): Promise<Response> {
+  const secret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return new Response(null, { status: 401 });
   }
 
