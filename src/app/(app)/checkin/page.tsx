@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+import { SaveIcon } from 'lucide-react';
 import { db } from '@/db/client';
 import { dailyCheckins } from '@/db/schema';
 import { requireMember } from '@/lib/session';
@@ -6,6 +7,10 @@ import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
 import { NumberField } from '@/components/NumberField';
 import { HooperSlider } from '@/components/HooperSlider';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { saveCheckinAction } from './actions';
 
 export default async function CheckinPage({
@@ -24,12 +29,14 @@ export default async function CheckinPage({
   if (state === 'pre' || state === 'complete') {
     return (
       <div className="mx-auto flex max-w-md flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Morning check-in</h1>
-        <div className="rounded-[10px] border border-black/10 bg-white p-5 text-sm opacity-70 dark:border-white/10 dark:bg-black">
-          {state === 'pre'
-            ? 'Check-ins open once your cohort starts.'
-            : 'Protocol complete. Check-ins are closed.'}
-        </div>
+        <h1 className="text-2xl font-semibold text-wi-black">Morning check-in</h1>
+        <Card>
+          <CardContent className="text-sm text-wi-ink-500">
+            {state === 'pre'
+              ? 'Check-ins open once your cohort starts.'
+              : 'Protocol complete. Check-ins are closed.'}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -45,14 +52,14 @@ export default async function CheckinPage({
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Morning check-in</h1>
-        <p className="mt-1 text-sm opacity-60">
+        <h1 className="text-2xl font-semibold text-wi-black">Morning check-in</h1>
+        <p className="mt-1 text-sm text-wi-ink-500">
           {existing ? 'Already saved today. Edit and update anytime before tomorrow.' : 'Takes about a minute.'}
         </p>
       </div>
 
       {error && (
-        <p role="alert" className="text-sm">
+        <p role="alert" className="text-sm text-wi-black">
           Please fill in every field before saving.
         </p>
       )}
@@ -83,33 +90,25 @@ export default async function CheckinPage({
           defaultValue={existing?.sleepHours}
         />
 
-        <div className="flex flex-col gap-4 rounded-[10px] border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-black">
-          <p className="text-xs uppercase tracking-[0.2em] opacity-50">Hooper index</p>
-          <HooperSlider name="hooperSleep" label="Sleep quality" defaultValue={existing?.hooperSleep ?? 3} />
-          <HooperSlider name="hooperFatigue" label="Fatigue" defaultValue={existing?.hooperFatigue ?? 3} />
-          <HooperSlider name="hooperSoreness" label="Soreness" defaultValue={existing?.hooperSoreness ?? 3} />
-          <HooperSlider name="hooperStress" label="Stress" defaultValue={existing?.hooperStress ?? 3} />
-        </div>
+        <Card>
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-wi-ink-500">Hooper index</p>
+            <HooperSlider name="hooperSleep" label="Sleep quality" defaultValue={existing?.hooperSleep ?? 3} />
+            <HooperSlider name="hooperFatigue" label="Fatigue" defaultValue={existing?.hooperFatigue ?? 3} />
+            <HooperSlider name="hooperSoreness" label="Soreness" defaultValue={existing?.hooperSoreness ?? 3} />
+            <HooperSlider name="hooperStress" label="Stress" defaultValue={existing?.hooperStress ?? 3} />
+          </CardContent>
+        </Card>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="note" className="text-sm font-medium">
-            Note (optional)
-          </label>
-          <textarea
-            id="note"
-            name="note"
-            rows={3}
-            defaultValue={existing?.note ?? ''}
-            className="rounded-[6px] border border-black/20 bg-transparent px-3 py-3 text-base text-black placeholder:text-black/30 dark:border-white/20 dark:text-white dark:placeholder:text-white/30"
-          />
+          <Label htmlFor="note">Note (optional)</Label>
+          <Textarea id="note" name="note" rows={3} defaultValue={existing?.note ?? ''} />
         </div>
 
-        <button
-          type="submit"
-          className="rounded-[6px] bg-black px-6 py-5 text-base font-semibold text-white dark:bg-white dark:text-black"
-        >
+        <Button type="submit" size="lg" className="h-auto py-5 text-base normal-case tracking-normal">
+          <SaveIcon />
           {existing ? 'Update' : 'Save'}
-        </button>
+        </Button>
       </form>
     </div>
   );

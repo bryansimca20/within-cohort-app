@@ -1,9 +1,15 @@
+import { RouteIcon } from 'lucide-react';
 import { requireMember } from '@/lib/session';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
 import { NumberField } from '@/components/NumberField';
 import { RpeSlider } from '@/components/RpeSlider';
 import { SessionTypeField } from '@/components/SessionTypeField';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { saveSessionAction } from './actions';
 
 export default async function SessionPage({
@@ -23,12 +29,14 @@ export default async function SessionPage({
   if (state === 'pre' || state === 'complete') {
     return (
       <div className="mx-auto flex max-w-md flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Log a session</h1>
-        <div className="rounded-[10px] border border-black/10 bg-white p-5 text-sm opacity-70 dark:border-white/10 dark:bg-black">
-          {state === 'pre'
-            ? 'Session logging opens once your cohort starts.'
-            : 'Protocol complete. Session logging is closed.'}
-        </div>
+        <h1 className="text-2xl font-semibold text-wi-black">Log a session</h1>
+        <Card>
+          <CardContent className="text-sm text-wi-ink-500">
+            {state === 'pre'
+              ? 'Session logging opens once your cohort starts.'
+              : 'Protocol complete. Session logging is closed.'}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -41,12 +49,12 @@ export default async function SessionPage({
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Log a session</h1>
-        <p className="mt-1 text-sm opacity-60">Log after any run over 45 min or a hard effort.</p>
+        <h1 className="text-2xl font-semibold text-wi-black">Log a session</h1>
+        <p className="mt-1 text-sm text-wi-ink-500">Log after any run over 45 min or a hard effort.</p>
       </div>
 
       {error && (
-        <p role="alert" className="text-sm">
+        <p role="alert" className="text-sm text-wi-black">
           Please fill in every field before saving.
         </p>
       )}
@@ -58,34 +66,33 @@ export default async function SessionPage({
         <NumberField name="distanceKm" label="Distance (km)" min={0} max={100} step={0.1} />
 
         {showServingToggle && (
-          <label className="flex items-center justify-between gap-3 rounded-[10px] border border-black/10 bg-white p-5 text-sm font-medium dark:border-white/10 dark:bg-black">
-            Took serving
-            <input
-              type="checkbox"
-              name="tookServing"
-              className="h-6 w-6 shrink-0 rounded-[6px] border border-black/20 accent-black dark:border-white/20 dark:accent-white"
-            />
-          </label>
+          <Card>
+            <CardContent>
+              {/* Native checkbox semantics, unchanged: the shadcn Checkbox
+                  renders a real hidden <input type="checkbox">. Unchecked, it
+                  submits nothing; checked, and with no `value` prop set, it
+                  falls back to the browser's native default value of "on",
+                  exactly the wire format saveSessionAction already parses
+                  (`tookServingRaw === 'true' || tookServingRaw === 'on'`).
+                  Verified via FormData in a throwaway render test before
+                  shipping this. */}
+              <Label htmlFor="tookServing" className="flex items-center justify-between gap-3 normal-case">
+                <span className="text-sm font-medium text-wi-black">Took serving</span>
+                <Checkbox id="tookServing" name="tookServing" className="size-6" />
+              </Label>
+            </CardContent>
+          </Card>
         )}
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="note" className="text-sm font-medium">
-            Note (optional)
-          </label>
-          <textarea
-            id="note"
-            name="note"
-            rows={3}
-            className="rounded-[6px] border border-black/20 bg-transparent px-3 py-3 text-base text-black placeholder:text-black/30 dark:border-white/20 dark:text-white dark:placeholder:text-white/30"
-          />
+          <Label htmlFor="note">Note (optional)</Label>
+          <Textarea id="note" name="note" rows={3} />
         </div>
 
-        <button
-          type="submit"
-          className="rounded-[6px] bg-black px-6 py-5 text-base font-semibold text-white dark:bg-white dark:text-black"
-        >
+        <Button type="submit" size="lg" className="h-auto py-5 text-base normal-case tracking-normal">
+          <RouteIcon />
           Log session
-        </button>
+        </Button>
       </form>
     </div>
   );

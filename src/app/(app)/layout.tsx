@@ -1,6 +1,9 @@
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import Link from 'next/link';
+import { HistoryIcon, HomeIcon, LogOutIcon } from 'lucide-react';
 import { logout } from '@/app/login/actions';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 // Chrome for every logged-in route: a header (wordmark + logout) and a
 // bottom tab bar (Today / History). This is the *only* navigation surface
@@ -12,36 +15,51 @@ import { logout } from '@/app/login/actions';
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full flex-1 flex-col bg-[var(--background)] text-[var(--foreground)]">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/10 bg-[var(--background)] px-4 py-3 dark:border-white/10">
-        <span className="text-sm font-bold tracking-[0.3em]">WITHIN</span>
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-wi-line bg-wi-paper px-4 py-3">
+        <span className="text-sm font-bold tracking-[0.3em] text-wi-black">WITHIN</span>
         <form action={logout}>
-          <button
-            type="submit"
-            className="rounded-[6px] border border-black/20 px-3 py-1.5 text-xs font-medium text-black/70 dark:border-white/20 dark:text-white/70"
-          >
+          <Button type="submit" variant="secondary" size="sm">
+            <LogOutIcon />
             Log out
-          </button>
+          </Button>
         </form>
       </header>
 
       <main className="flex-1 px-4 pt-6 pb-28">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-black/10 bg-[var(--background)] pb-[env(safe-area-inset-bottom)] dark:border-white/10">
+      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-wi-line bg-wi-paper pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto flex max-w-md">
-          <Link
-            href="/today"
-            className="flex flex-1 items-center justify-center py-4 text-sm font-medium"
-          >
+          <NavLink href="/today" icon={HomeIcon}>
             Today
-          </Link>
-          <Link
-            href="/history"
-            className="flex flex-1 items-center justify-center py-4 text-sm font-medium"
-          >
+          </NavLink>
+          <NavLink href="/history" icon={HistoryIcon}>
             History
-          </Link>
+          </NavLink>
         </div>
       </nav>
     </div>
+  );
+}
+
+/** Bottom-tab link: icon over label, sized for a one-handed thumb tap. */
+function NavLink({
+  href,
+  icon: Icon,
+  children,
+}: {
+  href: string;
+  icon: ComponentType<{ className?: string }>;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'flex flex-1 flex-col items-center justify-center gap-1 py-3 text-xs font-bold uppercase tracking-[0.1em] text-wi-black transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] active:opacity-60'
+      )}
+    >
+      <Icon className="size-5" />
+      {children}
+    </Link>
   );
 }
