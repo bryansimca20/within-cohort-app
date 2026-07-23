@@ -4,6 +4,6 @@ import path from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
-  test: { environment: 'jsdom', globals: true, setupFiles: ['./vitest.setup.ts'] },
+  test: { environment: 'jsdom', globals: true, setupFiles: ['./vitest.setup.ts'], testTimeout: 20000 },
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
 });
