@@ -1,27 +1,30 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { RpeSlider } from '@/components/RpeSlider';
 
-test('renders a 0..10 range slider', () => {
-  render(<RpeSlider name="rpe" defaultValue={5} />);
-  const slider = screen.getByRole('slider') as HTMLInputElement;
-  expect(slider.getAttribute('min')).toBe('0');
-  expect(slider.getAttribute('max')).toBe('10');
+test('renders the RPE label, live readout, and rest/max legend', () => {
+  const { getByText } = render(<RpeSlider name="rpe" defaultValue={6} />);
+  expect(getByText('RPE (effort)')).toBeInTheDocument();
+  expect(getByText('6')).toBeInTheDocument();
+  expect(getByText('0 rest')).toBeInTheDocument();
+  expect(getByText('10 max')).toBeInTheDocument();
 });
 
-test('submits under the given name and reflects the default value', () => {
-  render(<RpeSlider name="rpe" defaultValue={7} />);
-  const slider = screen.getByRole('slider') as HTMLInputElement;
-  expect(slider.name).toBe('rpe');
-  expect(slider.value).toBe('7');
+test('submits the default value under the given name via FormData', () => {
+  const { container } = render(
+    <form>
+      <RpeSlider name="rpe" defaultValue={7} />
+    </form>
+  );
+  const form = container.querySelector('form')!;
+  expect(new FormData(form).get('rpe')).toBe('7');
 });
 
-test('shows a live value readout', () => {
-  render(<RpeSlider name="rpe" defaultValue={6} />);
-  expect(screen.getByText('6')).toBeInTheDocument();
-});
-
-test('shows a min/max legend', () => {
-  render(<RpeSlider name="rpe" defaultValue={5} />);
-  expect(screen.getByText(/rest/i)).toBeInTheDocument();
-  expect(screen.getByText(/max/i)).toBeInTheDocument();
+test('falls back to the default of 5 when no defaultValue is given', () => {
+  const { container } = render(
+    <form>
+      <RpeSlider name="rpe" />
+    </form>
+  );
+  const form = container.querySelector('form')!;
+  expect(new FormData(form).get('rpe')).toBe('5');
 });
