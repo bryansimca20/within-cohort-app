@@ -5,6 +5,7 @@ import { requireMember } from '@/lib/session';
 import { getTodayStatus, type TodayStatus } from '@/lib/today';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { InstallCard } from '@/components/InstallCard';
 import { cn } from '@/lib/utils';
 
 // 'YYYY-MM-DD' is a plain calendar date with no time component; parsing it
@@ -90,7 +91,7 @@ export default async function TodayPage() {
         </Link>
       </div>
 
-      {/* InstallCard mounts here (Task D1) */}
+      <InstallCard />
     </div>
   );
 }
