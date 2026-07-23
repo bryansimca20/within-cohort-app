@@ -65,14 +65,39 @@ export async function saveCheckin(db: AnyPgDatabase, member: Member, input: unkn
 
 export async function saveCheckinAction(formData: FormData): Promise<void> {
   const member = await requireMember();
+
+  const recoveryRaw = formData.get('recovery');
+  const restingHrRaw = formData.get('restingHr');
+  const sleepHoursRaw = formData.get('sleepHours');
+  const hooperSleepRaw = formData.get('hooperSleep');
+  const hooperFatigueRaw = formData.get('hooperFatigue');
+  const hooperSorenessRaw = formData.get('hooperSoreness');
+  const hooperStressRaw = formData.get('hooperStress');
+
+  // z.coerce.number() turns a missing field into 0 (Number(null) === 0) and
+  // an empty string into 0 as well (Number('') === 0), so an incomplete
+  // submission would otherwise coerce into valid-looking zeros instead of
+  // failing. Reject those up front rather than letting them coerce.
+  if (
+    !recoveryRaw ||
+    !restingHrRaw ||
+    !sleepHoursRaw ||
+    !hooperSleepRaw ||
+    !hooperFatigueRaw ||
+    !hooperSorenessRaw ||
+    !hooperStressRaw
+  ) {
+    redirect('/checkin?error=1');
+  }
+
   const input = {
-    recovery: formData.get('recovery'),
-    restingHr: formData.get('restingHr'),
-    sleepHours: formData.get('sleepHours'),
-    hooperSleep: formData.get('hooperSleep'),
-    hooperFatigue: formData.get('hooperFatigue'),
-    hooperSoreness: formData.get('hooperSoreness'),
-    hooperStress: formData.get('hooperStress'),
+    recovery: recoveryRaw,
+    restingHr: restingHrRaw,
+    sleepHours: sleepHoursRaw,
+    hooperSleep: hooperSleepRaw,
+    hooperFatigue: hooperFatigueRaw,
+    hooperSoreness: hooperSorenessRaw,
+    hooperStress: hooperStressRaw,
     note: formData.get('note') ?? undefined,
   };
   await saveCheckin(prodDb, member, input, new Date());
