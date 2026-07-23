@@ -31,3 +31,84 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
 }
+
+/* ============================================================
+   shadcn/ui (Base UI) primitive layer — WITHIN monochrome bridge.
+   Added in Task R0 (init only, no page migration). The tokens above
+   are untouched; these are additive. src/components/ui/* primitives
+   read from the tokens declared below.
+
+   Note: unlike --background/--foreground above, these do not flip
+   under prefers-color-scheme yet — no page renders a ui/ primitive
+   in this task, so there is nothing to keep in sync. Wire up a dark
+   mapping when a primitive is first migrated onto a page.
+   ============================================================ */
+
+/* ---- WITHIN raw utilities exposed to Tailwind (bg-wi-*, text-wi-*, border-wi-*) ---- */
+@theme {
+  --color-wi-black: #000000;
+  --color-wi-charcoal: #191919;
+  --color-wi-ink-700: #3d3d3d;
+  --color-wi-ink-500: #6b6b6b;
+  --color-wi-ink-300: #a3a3a3;
+  --color-wi-line: #d6d6d6;
+  --color-wi-mist: #e6e6e6;
+  --color-wi-paper-dim: #f2f2f2;
+  --color-wi-paper: #ffffff;
+
+  /* Micro label size (eyebrows, field labels, table headers). */
+  --text-2xs: 11px;
+}
+
+/* ---- shadcn semantic tokens → Tailwind utilities (bg-primary, text-muted-foreground, ...) ---- */
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+  /* ---- radius (WITHIN, prefixed so it never collides with shadcn --radius-*) ---- */
+  --wi-radius-control: 6px;
+  --wi-radius-card: 10px;
+
+  /* ---- low, tight, neutral shadows (cards, popovers) ---- */
+  --wi-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --wi-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
+
+  /* ---- shadcn semantic bridge → WITHIN (monochrome, no hue) ---- */
+  --radius: 0.625rem; /* 10px, shadcn's own --radius-lg — cards */
+  --primary: var(--color-black);
+  --primary-foreground: var(--color-white);
+  --secondary: var(--color-wi-mist);
+  --secondary-foreground: var(--color-black);
+  --muted: var(--color-wi-mist);
+  --muted-foreground: var(--color-wi-ink-500);
+  --accent: var(--color-wi-mist);
+  --accent-foreground: var(--color-black);
+  --destructive: var(--color-charcoal);
+  --border: var(--color-wi-line);
+  --input: var(--color-wi-line);
+  --ring: var(--color-black);
+  --card: var(--color-white);
+  --card-foreground: var(--color-black);
+  --popover: var(--color-white);
+  --popover-foreground: var(--color-black);
+}
