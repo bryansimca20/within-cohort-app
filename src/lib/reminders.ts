@@ -3,7 +3,9 @@ import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { dailyCheckins, members } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { getPhase } from '@/lib/phase';
-import { localDateFor } from '@/lib/dates';
+import { localDateFor, isValidTimeZone } from '@/lib/dates';
+
+const FALLBACK_TIMEZONE = 'Asia/Jakarta';
 
 type Schema = typeof schema;
 // Any drizzle Postgres-family driver (postgres-js in prod, pglite in tests)
@@ -32,7 +34,11 @@ export async function membersNeedingReminder(db: AnyPgDatabase, now: Date): Prom
   for (const member of cohortMembers) {
     if (!member.cohortStartDate) continue;
 
-    const localDate = localDateFor(member.timezone, now);
+    // Defense-in-depth: a pre-existing/legacy bad timezone must not abort the
+    // whole batch. Fall back to the default zone for this member's computation
+    // rather than throwing or skipping them.
+    const tz = isValidTimeZone(member.timezone) ? member.timezone : FALLBACK_TIMEZONE;
+    const localDate = localDateFor(tz, now);
     const { state } = getPhase(member.cohortStartDate, localDate);
     if (state !== 'baseline' && state !== 'within') continue;
 

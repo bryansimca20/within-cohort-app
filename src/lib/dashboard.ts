@@ -3,7 +3,9 @@ import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { dailyCheckins, sessionLogs, members } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { getPhase, type PhaseState } from '@/lib/phase';
-import { localDateFor } from '@/lib/dates';
+import { localDateFor, isValidTimeZone } from '@/lib/dates';
+
+const FALLBACK_TIMEZONE = 'Asia/Jakarta';
 
 type Schema = typeof schema;
 // Any drizzle Postgres-family driver (postgres-js in prod, pglite in tests)
@@ -35,7 +37,11 @@ export async function buildDashboard(db: AnyPgDatabase, now: Date): Promise<Dash
 
   const rows: DashboardRow[] = [];
   for (const member of cohortMembers) {
-    const localDate = localDateFor(member.timezone, now);
+    // Defense-in-depth: a pre-existing/legacy bad timezone must not abort the
+    // whole batch. Fall back to the default zone for this member's computation
+    // rather than throwing or skipping them.
+    const tz = isValidTimeZone(member.timezone) ? member.timezone : FALLBACK_TIMEZONE;
+    const localDate = localDateFor(tz, now);
 
     let phaseState: PhaseState;
     let dayIndex: number;

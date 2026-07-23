@@ -95,6 +95,36 @@ test('updateMemberFlags updates flags, start date, and timezone', async () => {
   expect(row.cohortStartDate).toBe('2026-09-01');
 });
 
+test('createMember rejects an invalid timezone', async () => {
+  const { db } = await makeTestDb();
+  await expect(
+    createMember(db, {
+      name: 'Bad Tz',
+      inCohort: true,
+      isAdmin: false,
+      cohortStartDate: null,
+      timezone: 'Not/AZone',
+    }),
+  ).rejects.toThrow();
+});
+
+test('updateMemberFlags rejects an invalid timezone', async () => {
+  const { db } = await makeTestDb();
+  const [m] = await db
+    .insert(members)
+    .values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' })
+    .returning();
+
+  await expect(
+    updateMemberFlags(db, m.id, {
+      inCohort: true,
+      isAdmin: false,
+      cohortStartDate: '2026-08-01',
+      timezone: 'Not/AZone',
+    }),
+  ).rejects.toThrow();
+});
+
 test('updateMemberFlags can clear the cohort start date back to null', async () => {
   const { db } = await makeTestDb();
   const [m] = await db

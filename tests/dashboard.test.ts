@@ -51,6 +51,21 @@ test('counts only today\'s sessions and resolves phase/day for an in-progress me
   expect(row.dayIndex).toBe(14);
 });
 
+test('a member with an invalid (legacy) timezone does not abort the batch and falls back to Asia/Jakarta', async () => {
+  const { db } = await makeTestDb();
+  // Bypass validation to simulate a pre-existing bad row (direct insert, not createMember).
+  await db
+    .insert(members)
+    .values({ name: 'Legacy', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Not/AZone' });
+
+  const NOW = new Date('2026-08-15T02:00:00Z'); // 09:00 Jakarta -> localDate 2026-08-15
+  const d = await buildDashboard(db, NOW);
+  const row = d.find((r) => r.name === 'Legacy')!;
+  expect(row).toBeDefined();
+  expect(row.localDate).toBe('2026-08-15');
+  expect(row.phaseState).toBe('within');
+});
+
 test('a member with no cohortStartDate is phase "pre"', async () => {
   const { db } = await makeTestDb();
   await db

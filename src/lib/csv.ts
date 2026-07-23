@@ -1,10 +1,21 @@
+// Leading characters that a spreadsheet app (Excel/Sheets) interprets as the
+// start of a formula: =, +, -, @, and a leading tab.
+const FORMULA_TRIGGER = /^[=+\-@\t]/;
+
 /**
  * Escapes a value per RFC-4180 CSV rules.
  * If the value contains comma, double quote, newline, or carriage return,
  * wrap it in double quotes and double any internal double quotes.
+ * A value starting with a formula trigger (=, +, -, @, or a leading tab) is
+ * prefixed with a single quote first, so spreadsheet apps render it as text
+ * instead of executing it as a formula (CSV formula injection).
  */
 function escapeField(value: unknown): string {
-  const str = value === null || value === undefined ? '' : String(value);
+  let str = value === null || value === undefined ? '' : String(value);
+
+  if (FORMULA_TRIGGER.test(str)) {
+    str = `'${str}`;
+  }
 
   // Check if escaping is needed
   if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {

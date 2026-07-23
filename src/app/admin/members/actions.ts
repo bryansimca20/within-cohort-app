@@ -7,6 +7,7 @@ import { members, type Member } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
 import { generatePasscode, hashPasscode } from '@/lib/passcode';
+import { isValidTimeZone } from '@/lib/dates';
 
 type Schema = typeof schema;
 // Any drizzle Postgres-family driver (postgres-js in prod, pglite in tests)
@@ -31,6 +32,10 @@ export async function createMember(
   db: AnyPgDatabase,
   input: CreateMemberInput,
 ): Promise<{ member: Member; plaintext: string }> {
+  if (!isValidTimeZone(input.timezone)) {
+    throw new Error(`Invalid timezone: ${input.timezone}`);
+  }
+
   const plaintext = generatePasscode();
   const passcodeHash = await hashPasscode(plaintext);
 
@@ -75,6 +80,10 @@ export async function updateMemberFlags(
   memberId: string,
   input: UpdateMemberFlagsInput,
 ): Promise<Member> {
+  if (!isValidTimeZone(input.timezone)) {
+    throw new Error(`Invalid timezone: ${input.timezone}`);
+  }
+
   const [member] = await db
     .update(members)
     .set({

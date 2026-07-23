@@ -60,6 +60,20 @@ test('a member past day 41 (complete) is not returned', async () => {
   expect(due.find((m) => m.name === 'Eli')).toBeUndefined();
 });
 
+test('a member with an invalid (legacy) timezone does not abort the batch and is still evaluated', async () => {
+  const { db } = await makeTestDb();
+  // Bypass validation to simulate a pre-existing bad row (direct insert, not createMember).
+  await db
+    .insert(members)
+    .values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' });
+  await db
+    .insert(members)
+    .values({ name: 'Legacy', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Not/AZone' });
+
+  const due = await membersNeedingReminder(db, NOW);
+  expect(due.map((m) => m.name).sort()).toEqual(['Ana', 'Legacy']);
+});
+
 test('returns id, name, and timezone for a due member', async () => {
   const { db } = await makeTestDb();
   const [ana] = await db
