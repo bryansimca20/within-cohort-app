@@ -10,8 +10,8 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isPublic =
     pathname === '/login' ||
-    pathname.startsWith('/api/cron') ||
-    pathname.startsWith('/api/push');
+    pathname.startsWith('/api/cron/') ||
+    pathname.startsWith('/api/push/');
 
   if (!hasSession && !isPublic) {
     return NextResponse.redirect(new URL('/login', req.url));

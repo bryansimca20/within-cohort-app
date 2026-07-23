@@ -4,7 +4,7 @@ import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { redirect } from 'next/navigation';
 import { db as prodDb } from '@/db/client';
 import { members } from '@/db/schema';
-import * as schema from '@/db/schema';
+import type * as schema from '@/db/schema';
 import { verifyPasscode } from '@/lib/passcode';
 import { getSession } from '@/lib/session';
 import { rateLimit } from '@/lib/rateLimit';
@@ -27,11 +27,19 @@ export async function authenticate(db: AnyPgDatabase, memberId: string, passcode
   return (await verifyPasscode(passcode, m.passcodeHash)) ? m.id : null;
 }
 
+// Standard 8-4-4-4-12 hex UUID shape. Members are looked up by `id` (a uuid
+// column), so anything that isn't UUID-shaped can never match a real member.
+// Rejecting those before they reach `rateLimit` keeps an attacker who posts
+// arbitrary junk `memberId` values from growing the rate limiter's bucket
+// Map without bound.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function login(formData: FormData) {
   const memberId = String(formData.get('memberId') ?? '');
   const passcode = String(formData.get('passcode') ?? '');
 
   if (!memberId) redirect('/login?error=1');
+  if (!UUID_RE.test(memberId)) redirect('/login?error=1');
   if (!rateLimit(memberId)) redirect('/login?error=rate');
 
   const ok = await authenticate(prodDb, memberId, passcode);
