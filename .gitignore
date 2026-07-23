@@ -23,6 +23,9 @@ coverage/
 *.pem
 npm-debug.log*
 
+# vercel
+.vercel
+
 # superpowers scratch
 .superpowers/
 

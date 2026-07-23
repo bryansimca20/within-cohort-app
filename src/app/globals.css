@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* WITHIN — monochrome tokens.
+   Verbatim values from ../presentations/design-system/deck.css. No hue,
+   ever. Differentiation comes from weight and contrast, not color. */
+:root {
+  --color-black: #000000;
+  --color-charcoal: #191919;
+  --color-paper-dim: #f2f2f2;
+  --color-white: #ffffff;
+
+  --background: var(--color-paper-dim);
+  --foreground: var(--color-black);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--color-charcoal);
+    --foreground: var(--color-white);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+}
