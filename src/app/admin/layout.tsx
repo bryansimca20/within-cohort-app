@@ -3,8 +3,10 @@ import Link from 'next/link';
 import { logout } from '@/app/login/actions';
 
 // Chrome for every founder/admin route: a header (wordmark + back-to-runner
-// + logout) and a nav row for the dashboard and the two raw CSV exports.
-// Read-only surface: nothing here writes data on behalf of a member.
+// + logout) and a nav row for the dashboard, member management, and the two
+// raw CSV exports. The layout itself never writes data; /admin/members is
+// the one child route that does (roster + passcode management), gated by
+// its own requireAdmin() call.
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full flex-1 flex-col bg-[var(--background)] text-[var(--foreground)]">
@@ -37,6 +39,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-3xl flex-wrap gap-4 text-xs font-medium uppercase tracking-[0.15em]">
           <Link href="/admin" className="opacity-70 hover:opacity-100">
             Dashboard
+          </Link>
+          <Link href="/admin/members" className="opacity-70 hover:opacity-100">
+            Members
           </Link>
           <a href="/admin/export?type=checkins" className="opacity-70 hover:opacity-100">
             Export check-ins
