@@ -12,19 +12,18 @@
 
   --background: var(--color-paper-dim);
   --foreground: var(--color-black);
+
+  /* Monochrome, light-only by design (see WITHIN Design System in
+     CLAUDE.md): never a `dark:` variant. Pin native controls/scrollbars to
+     light so a phone set to system dark mode doesn't render them dark
+     against this always-light UI. */
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--color-charcoal);
-    --foreground: var(--color-white);
-  }
 }
 
 body {
@@ -35,14 +34,10 @@ body {
 
 /* ============================================================
    shadcn/ui (Base UI) primitive layer — WITHIN monochrome bridge.
-   Added in Task R0 (init only, no page migration). The tokens above
-   are untouched; these are additive. src/components/ui/* primitives
-   read from the tokens declared below.
-
-   Note: unlike --background/--foreground above, these do not flip
-   under prefers-color-scheme yet — no page renders a ui/ primitive
-   in this task, so there is nothing to keep in sync. Wire up a dark
-   mapping when a primitive is first migrated onto a page.
+   Added in Task R0. The tokens above are untouched; these are additive.
+   src/components/ui/* primitives read from the tokens declared below.
+   Light-only throughout: see the `color-scheme: light` note above — the
+   app never ships a `dark:` variant.
    ============================================================ */
 
 /* ---- WITHIN raw utilities exposed to Tailwind (bg-wi-*, text-wi-*, border-wi-*) ---- */

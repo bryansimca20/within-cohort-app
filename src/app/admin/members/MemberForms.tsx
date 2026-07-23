@@ -1,21 +1,20 @@
 'use client';
 import { useActionState } from 'react';
+import { KeyRoundIcon, UserPlusIcon } from 'lucide-react';
 import {
   addMemberAction,
   resetPasscodeAction,
   type AddMemberState,
   type ResetPasscodeState,
 } from './actions';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const initialAddState: AddMemberState = { status: 'idle' };
 const initialResetState: ResetPasscodeState = { status: 'idle' };
-
-const fieldClass =
-  'rounded-[6px] border border-black/20 bg-transparent px-3 py-2 text-sm text-black dark:border-white/20 dark:text-white';
-const labelClass = 'flex flex-col gap-1.5 text-sm';
-const checkboxLabelClass = 'flex items-center gap-2 text-sm';
-const buttonClass =
-  'rounded-[6px] border border-black/20 px-3 py-1.5 text-xs font-medium text-black/70 hover:opacity-100 disabled:opacity-40 dark:border-white/20 dark:text-white/70';
 
 // Client form so the server action's returned plaintext can render into the
 // page without ever touching a redirect/query string: useActionState keeps
@@ -27,49 +26,52 @@ export function AddMemberForm() {
   return (
     <form action={formAction} className="mt-4 flex flex-col gap-4">
       <div className="flex flex-wrap gap-4">
-        <label className={labelClass}>
-          Name
-          <input type="text" name="name" required className={`${fieldClass} min-w-[10rem]`} />
-        </label>
-        <label className={labelClass}>
-          Start date
-          <input type="date" name="cohortStartDate" className={fieldClass} />
-        </label>
-        <label className={labelClass}>
-          Timezone
-          <input
-            type="text"
-            name="timezone"
-            defaultValue="Asia/Jakarta"
-            className={`${fieldClass} w-40`}
-          />
-        </label>
+        <div className="flex min-w-40 flex-col gap-1.5">
+          <Label htmlFor="add-member-name">Name</Label>
+          <Input id="add-member-name" type="text" name="name" required />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="add-member-start">Start date</Label>
+          <Input id="add-member-start" type="date" name="cohortStartDate" />
+        </div>
+        <div className="flex w-40 flex-col gap-1.5">
+          <Label htmlFor="add-member-tz">Timezone</Label>
+          <Input id="add-member-tz" type="text" name="timezone" defaultValue="Asia/Jakarta" />
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-4">
-        <label className={checkboxLabelClass}>
-          <input type="checkbox" name="inCohort" defaultChecked />
+        <label className="flex items-center gap-2 text-sm font-medium text-wi-black">
+          <Checkbox name="inCohort" defaultChecked />
           In cohort
         </label>
-        <label className={checkboxLabelClass}>
-          <input type="checkbox" name="isAdmin" />
+        <label className="flex items-center gap-2 text-sm font-medium text-wi-black">
+          <Checkbox name="isAdmin" />
           Admin
         </label>
       </div>
 
       <div>
-        <button type="submit" disabled={pending} className={buttonClass}>
+        <Button type="submit" disabled={pending} variant="outline" size="sm">
+          <UserPlusIcon />
           {pending ? 'Adding…' : 'Add member'}
-        </button>
+        </Button>
       </div>
 
       {state.status === 'success' && (
-        <p role="status" className="rounded-[6px] border border-black/20 px-3 py-2 text-sm font-medium dark:border-white/20">
-          Passcode for {state.name}: <strong>{state.plaintext}</strong> (shown once, send it now)
-        </p>
+        <Card size="sm">
+          <CardContent>
+            <p role="status" className="text-sm text-wi-black">
+              Passcode for {state.name}: <strong className="font-bold">{state.plaintext}</strong>
+            </p>
+            <p className="mt-1 text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">
+              Shown once. Send it now.
+            </p>
+          </CardContent>
+        </Card>
       )}
       {state.status === 'error' && (
-        <p role="alert" className="text-sm">
+        <p role="alert" className="text-sm text-wi-black">
           {state.message}
         </p>
       )}
@@ -86,18 +88,19 @@ export function ResetPasscodeButton({ memberId, name }: { memberId: string; name
     <form action={formAction} className="flex flex-col items-start gap-2">
       <input type="hidden" name="memberId" value={memberId} />
       <input type="hidden" name="name" value={name} />
-      <button type="submit" disabled={pending} className={buttonClass}>
+      <Button type="submit" disabled={pending} variant="outline" size="sm">
+        <KeyRoundIcon />
         {pending ? 'Resetting…' : 'Reset passcode'}
-      </button>
+      </Button>
       {state.status === 'success' && (
-        <p role="status" className="text-xs font-medium">
-          New passcode: <strong>{state.plaintext}</strong>
+        <p role="status" className="text-xs font-medium text-wi-black">
+          New passcode: <strong className="font-bold">{state.plaintext}</strong>
           <br />
-          (shown once, send it now)
+          Shown once. Send it now.
         </p>
       )}
       {state.status === 'error' && (
-        <p role="alert" className="text-xs">
+        <p role="alert" className="text-xs text-wi-black">
           {state.message}
         </p>
       )}

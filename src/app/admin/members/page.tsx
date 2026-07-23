@@ -4,9 +4,12 @@ import { members } from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
 import { updateFlagsAction } from './actions';
 import { AddMemberForm, ResetPasscodeButton } from './MemberForms';
-
-const inputClass =
-  'rounded-[6px] border border-black/20 bg-transparent px-2 py-1 text-xs text-black dark:border-white/20 dark:text-white';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // Admin-only roster management: add members (a passcode is generated and
 // shown once), toggle cohort/admin flags and schedule, and reset a member's
@@ -20,76 +23,84 @@ export default async function AdminMembersPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Members</h1>
-        <p className="mt-1 text-sm opacity-70">Add members, adjust cohort flags, and reset passcodes.</p>
+        <h1 className="text-2xl font-semibold text-wi-black">Members</h1>
+        <p className="mt-1 text-sm text-wi-ink-500">Add members, adjust cohort flags, and reset passcodes.</p>
       </div>
 
-      <div className="rounded-[10px] border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-black">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.15em] opacity-70">Add member</h2>
-        <AddMemberForm />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xs tracking-[0.15em]">Add member</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AddMemberForm />
+        </CardContent>
+      </Card>
 
-      <div className="overflow-x-auto rounded-[10px] border border-black/10 dark:border-white/10">
-        <table className="w-full min-w-[720px] border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-black/10 bg-white text-left text-xs font-medium uppercase tracking-[0.15em] opacity-50 dark:border-white/10 dark:bg-black">
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Cohort settings</th>
-              <th className="px-4 py-3">Passcode</th>
-            </tr>
-          </thead>
-          <tbody>
+      <Card className="gap-0 py-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Cohort settings</TableHead>
+              <TableHead>Passcode</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {roster.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="px-4 py-6 text-sm opacity-70">
+              <TableRow>
+                <TableCell colSpan={3} className="py-6 text-sm whitespace-normal text-wi-ink-500">
                   No members yet. Add one above.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               roster.map((m) => (
-                <tr key={m.id} className="border-b border-black/10 bg-white align-top last:border-b-0 dark:border-white/10 dark:bg-black">
-                  <td className="px-4 py-4 font-medium">{m.name}</td>
-                  <td className="px-4 py-4">
+                <TableRow key={m.id}>
+                  <TableCell className="align-top font-medium text-wi-black">{m.name}</TableCell>
+                  <TableCell className="align-top whitespace-normal">
                     <form action={updateFlagsAction} className="flex flex-wrap items-end gap-4">
                       <input type="hidden" name="memberId" value={m.id} />
-                      <label className="flex items-center gap-1.5 text-xs">
-                        <input type="checkbox" name="inCohort" defaultChecked={m.inCohort} />
+                      <label className="flex items-center gap-1.5 text-xs font-medium text-wi-black">
+                        <Checkbox name="inCohort" defaultChecked={m.inCohort} />
                         In cohort
                       </label>
-                      <label className="flex items-center gap-1.5 text-xs">
-                        <input type="checkbox" name="isAdmin" defaultChecked={m.isAdmin} />
+                      <label className="flex items-center gap-1.5 text-xs font-medium text-wi-black">
+                        <Checkbox name="isAdmin" defaultChecked={m.isAdmin} />
                         Admin
                       </label>
-                      <label className="flex flex-col gap-1 text-xs">
-                        Start date
-                        <input
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor={`start-${m.id}`}>Start date</Label>
+                        <Input
+                          id={`start-${m.id}`}
                           type="date"
                           name="cohortStartDate"
                           defaultValue={m.cohortStartDate ?? ''}
-                          className={inputClass}
+                          className="h-9 w-38 text-xs"
                         />
-                      </label>
-                      <label className="flex flex-col gap-1 text-xs">
-                        Timezone
-                        <input type="text" name="timezone" defaultValue={m.timezone} className={`${inputClass} w-32`} />
-                      </label>
-                      <button
-                        type="submit"
-                        className="rounded-[6px] border border-black/20 px-3 py-1.5 text-xs font-medium text-black/70 dark:border-white/20 dark:text-white/70"
-                      >
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor={`tz-${m.id}`}>Timezone</Label>
+                        <Input
+                          id={`tz-${m.id}`}
+                          type="text"
+                          name="timezone"
+                          defaultValue={m.timezone}
+                          className="h-9 w-32 text-xs"
+                        />
+                      </div>
+                      <Button type="submit" variant="outline" size="sm">
                         Save
-                      </button>
+                      </Button>
                     </form>
-                  </td>
-                  <td className="px-4 py-4">
+                  </TableCell>
+                  <TableCell className="align-top whitespace-normal">
                     <ResetPasscodeButton memberId={m.id} name={m.name} />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }
