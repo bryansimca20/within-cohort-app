@@ -6,6 +6,7 @@ import { getTodayStatus, type TodayStatus } from '@/lib/today';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { InstallCard } from '@/components/InstallCard';
+import { EnablePush } from '@/components/EnablePush';
 import { cn } from '@/lib/utils';
 
 // 'YYYY-MM-DD' is a plain calendar date with no time component; parsing it
@@ -92,6 +93,7 @@ export default async function TodayPage() {
       </div>
 
       <InstallCard />
+      <EnablePush />
     </div>
   );
 }

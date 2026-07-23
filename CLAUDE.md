@@ -46,6 +46,7 @@ Package manager is **npm** (`package-lock.json` is source of truth). No `pnpm` /
 | `DATABASE_URL` | Serverless Postgres (Neon / Vercel Postgres) connection string |
 | `SESSION_SECRET` | iron-session cookie signing secret, **32+ chars** |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Web Push (generate with `npx web-push generate-vapid-keys`) |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Same value as `VAPID_PUBLIC_KEY`, deliberately client-exposed for `pushManager.subscribe()` |
 | `CRON_SECRET` | Bearer token the reminder cron route checks |
 
 - Never prefix a secret with `NEXT_PUBLIC_`. `VAPID_PUBLIC_KEY` is the only value the
