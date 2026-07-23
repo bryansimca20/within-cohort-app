@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# next.js
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+
+# testing
+coverage/
+
+# os / editor
+.DS_Store
+*.pem
+npm-debug.log*
+
+# superpowers scratch
+.superpowers/
+
+# plans stay local per house rule; specs are committed
+docs/superpowers/plans/
