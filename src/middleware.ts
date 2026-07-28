@@ -21,7 +21,10 @@ export function middleware(req: NextRequest) {
 
 // Runs on every route except static assets and the PWA files, which must
 // stay reachable unauthenticated (manifest/service worker/icons are fetched
-// before login, and favicon is fetched by the browser chrome itself).
+// before login, and favicon is fetched by the browser chrome itself). `brand`
+// covers the logo PNGs in public/brand/: next/image's optimizer fetches them
+// server-side without the session cookie, so guarding that path 307s the fetch
+// to /login and the logo renders broken (a 400 from the image optimizer).
 export const config = {
-  matcher: ['/((?!_next|icons|manifest.webmanifest|sw.js|favicon.ico).*)'],
+  matcher: ['/((?!_next|brand|icons|manifest.webmanifest|sw.js|favicon.ico).*)'],
 };
