@@ -34,6 +34,22 @@ export async function authenticate(db: AnyPgDatabase, memberId: string, passcode
 // Map without bound.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+type LoginResult = { ok: true; memberId: string } | { error: 'wrong' | 'rate' };
+
+// Pure, testable core for the state-returning login flow: same guard/rate-limit/
+// authenticate ordering as `login` below, but resolves to a LoginResult instead of
+// redirecting or touching cookies. Takes `db` as its first argument (per the
+// pure-core/wrapper convention) so it can run against the pglite test harness with
+// a seeded member and a real bad/correct passcode, unlike the `loginAttempt`
+// wrapper, which is hardcoded to the prod db handle.
+export async function attemptLogin(db: AnyPgDatabase, memberId: string, passcode: string): Promise<LoginResult> {
+  if (!memberId || !UUID_RE.test(memberId)) return { error: 'wrong' };
+  if (!rateLimit(memberId)) return { error: 'rate' };
+  const ok = await authenticate(db, memberId, passcode);
+  if (!ok) return { error: 'wrong' };
+  return { ok: true, memberId: ok };
+}
+
 export async function login(formData: FormData) {
   const memberId = String(formData.get('memberId') ?? '');
   const passcode = String(formData.get('passcode') ?? '');
@@ -57,16 +73,14 @@ export async function login(formData: FormData) {
 // admin/members/actions.ts (CreateMemberInput, AddMemberState, etc.).
 export type LoginState = { ok: true } | { error: 'wrong' | 'rate' } | null;
 
-/** State-returning counterpart to `login` for the keypad LoginFlow (Task 8): same guard/rate-limit/authenticate flow, but resolves to a LoginState instead of redirecting. */
+/** State-returning counterpart to `login` for the keypad LoginFlow (Task 8): delegates the decision to the pure `attemptLogin` core, then sets the session cookie on success instead of redirecting. */
 export async function loginAttempt(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const memberId = String(formData.get('memberId') ?? '');
   const passcode = String(formData.get('passcode') ?? '');
-  if (!memberId || !UUID_RE.test(memberId)) return { error: 'wrong' };
-  if (!rateLimit(memberId)) return { error: 'rate' };
-  const ok = await authenticate(prodDb, memberId, passcode);
-  if (!ok) return { error: 'wrong' };
+  const res = await attemptLogin(prodDb, memberId, passcode);
+  if ('error' in res) return res;
   const s = await getSession();
-  s.memberId = ok;
+  s.memberId = res.memberId;
   await s.save();
   return { ok: true };
 }
