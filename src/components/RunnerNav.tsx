@@ -29,7 +29,7 @@ export function RunnerNav() {
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'flex flex-1 flex-col items-center gap-1 py-2 text-2xs font-bold uppercase tracking-[0.06em]',
-                active ? 'text-wi-paper' : 'text-white/40'
+                active ? 'text-wi-paper' : 'text-wi-on-dark-3'
               )}
             >
               <Icon className="size-5" />

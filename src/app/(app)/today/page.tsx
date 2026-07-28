@@ -35,6 +35,7 @@ function initialsOf(name: string): string {
 }
 
 /** Ledger cell fill: solid for already-logged days, an outlined ring on the active phase's next slot while it's still unlogged today, faint for the rest. */
+// Renders a count-based progress bar (fill order tracks how many are logged), not a per-calendar-day map.
 function ledgerCellClass(index: number, loggedCount: number, isActivePhase: boolean, checkinDone: boolean): string {
   if (index < loggedCount) return 'bg-wi-paper';
   if (isActivePhase && !checkinDone && index === loggedCount) return 'bg-transparent border-[1.5px] border-wi-paper';

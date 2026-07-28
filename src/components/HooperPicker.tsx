@@ -24,7 +24,7 @@ export function HooperPicker({ name, label, anchor, defaultValue = 3 }: HooperPi
         <span id={id} className="text-sm font-semibold">
           {label}
         </span>
-        {anchor ? <span className="text-[11px] text-wi-ink-500">{anchor}</span> : null}
+        {anchor ? <span className="text-2xs text-wi-ink-500">{anchor}</span> : null}
       </div>
       <div role="group" aria-labelledby={id} className="flex gap-2">
         {VALUES.map((n) => {

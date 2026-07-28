@@ -32,6 +32,7 @@ export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boole
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         className="flex w-full items-center gap-3 p-[14px] text-left"
       >
         <div className="w-[42px] shrink-0 text-center">

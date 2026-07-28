@@ -37,7 +37,7 @@ function ToastPill({ message }: { message: string }) {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-24 z-20 flex justify-center px-4">
-      <div className="animate-wi-toast-in flex max-w-[340px] items-center gap-2.5 whitespace-nowrap rounded-[10px] bg-wi-black px-[18px] py-3 text-sm font-semibold text-wi-paper shadow-[var(--wi-shadow-lg)]">
+      <div className="animate-wi-toast-in flex max-w-[340px] items-center gap-2.5 whitespace-nowrap rounded-lg bg-wi-black px-[18px] py-3 text-sm font-semibold text-wi-paper shadow-[var(--wi-shadow-lg)]">
         <Check className="size-4" />
         {message}
       </div>

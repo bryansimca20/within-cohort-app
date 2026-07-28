@@ -28,7 +28,7 @@ export default async function HistoryPage() {
 
   const days = groupByDate(checkins, sessions);
 
-  const isWithin = status.phaseState === 'within';
+  const isWithin = status.phaseState === 'within' || status.phaseState === 'complete';
   const logged = isWithin ? status.withinLogged : status.baselineLogged;
   const total = isWithin ? 28 : 14;
   const pct = total ? Math.round((logged / total) * 100) : 0;
