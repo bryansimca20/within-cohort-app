@@ -3,10 +3,10 @@ import { RpeSlider } from '@/components/RpeSlider';
 
 test('renders the RPE label, live readout, and rest/max legend', () => {
   const { getByText } = render(<RpeSlider name="rpe" defaultValue={6} />);
-  expect(getByText('RPE (effort)')).toBeInTheDocument();
+  expect(getByText('RPE · effort')).toBeInTheDocument();
   expect(getByText('6')).toBeInTheDocument();
-  expect(getByText('0 rest')).toBeInTheDocument();
-  expect(getByText('10 max')).toBeInTheDocument();
+  expect(getByText('0 · rest')).toBeInTheDocument();
+  expect(getByText('10 · max')).toBeInTheDocument();
 });
 
 test('submits the default value under the given name via FormData', () => {

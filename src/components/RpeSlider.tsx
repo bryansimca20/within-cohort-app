@@ -10,12 +10,7 @@ type RpeSliderProps = {
   defaultValue?: number;
 };
 
-// Rate of Perceived Exertion for a logged session: 0 (rest) to 10 (max
-// effort) integer scale. Kept controlled so the visible "current value"
-// readout stays in sync with the thumb, mirroring HooperSlider's shape. A
-// hidden input mirrors the Slider's value so the field reliably submits
-// under `name` in FormData rather than depending on Base UI's own internal
-// form-input wiring.
+/** Rate of Perceived Exertion (0 rest - 10 max) for a logged session, shown as a large live readout; a hidden input mirrors the Slider's value so the field reliably submits under `name` in FormData rather than depending on Base UI's own internal form-input wiring. */
 export function RpeSlider({ name, defaultValue = 5 }: RpeSliderProps) {
   const id = useId();
   const [value, setValue] = useState(defaultValue);
@@ -23,8 +18,11 @@ export function RpeSlider({ name, defaultValue = 5 }: RpeSliderProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <Label htmlFor={id}>RPE (effort)</Label>
-        <span className="text-sm font-semibold tabular-nums text-wi-black">{value}</span>
+        <Label htmlFor={id}>RPE · effort</Label>
+        <span className="text-[28px] font-bold leading-none">
+          {value}
+          <span className="text-sm text-wi-ink-300">/10</span>
+        </span>
       </div>
       <Slider
         id={id}
@@ -35,9 +33,9 @@ export function RpeSlider({ name, defaultValue = 5 }: RpeSliderProps) {
         onValueChange={(next) => setValue(Array.isArray(next) ? next[0] : next)}
       />
       <input type="hidden" name={name} value={value} />
-      <div className="flex justify-between text-xs text-wi-ink-300">
-        <span>0 rest</span>
-        <span>10 max</span>
+      <div className="flex justify-between text-2xs text-wi-ink-300">
+        <span>0 · rest</span>
+        <span>10 · max</span>
       </div>
     </div>
   );
