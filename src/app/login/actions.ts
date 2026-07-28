@@ -18,8 +18,8 @@ type AnyPgDatabase = PgDatabase<PgQueryResultHKT, Schema>;
 
 // Pure, testable core: given a db handle, a member id, and a plaintext
 // passcode, resolve whether it's correct. No cookies, no redirects, no rate
-// limiting; those live in the `login` server action below so this stays
-// trivial to exercise against the pglite test harness.
+// limiting; those live in the state-returning `loginAttempt` action below so
+// this stays trivial to exercise against the pglite test harness.
 export async function authenticate(db: AnyPgDatabase, memberId: string, passcode: string): Promise<string | null> {
   if (!memberId) return null;
   const [m] = await db.select().from(members).where(eq(members.id, memberId));
@@ -36,12 +36,12 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 type LoginResult = { ok: true; memberId: string } | { error: 'wrong' | 'rate' };
 
-// Pure, testable core for the state-returning login flow: same guard/rate-limit/
-// authenticate ordering as `login` below, but resolves to a LoginResult instead of
-// redirecting or touching cookies. Takes `db` as its first argument (per the
-// pure-core/wrapper convention) so it can run against the pglite test harness with
-// a seeded member and a real bad/correct passcode, unlike the `loginAttempt`
-// wrapper, which is hardcoded to the prod db handle.
+// Pure, testable core for the state-returning login flow: guards the memberId
+// shape, rate-limits, then authenticates, resolving to a LoginResult instead
+// of redirecting or touching cookies. Takes `db` as its first argument (per
+// the pure-core/wrapper convention) so it can run against the pglite test
+// harness with a seeded member and a real bad/correct passcode, unlike the
+// `loginAttempt` wrapper, which is hardcoded to the prod db handle.
 export async function attemptLogin(db: AnyPgDatabase, memberId: string, passcode: string): Promise<LoginResult> {
   if (!memberId || !UUID_RE.test(memberId)) return { error: 'wrong' };
   if (!rateLimit(memberId)) return { error: 'rate' };
@@ -50,30 +50,13 @@ export async function attemptLogin(db: AnyPgDatabase, memberId: string, passcode
   return { ok: true, memberId: ok };
 }
 
-export async function login(formData: FormData) {
-  const memberId = String(formData.get('memberId') ?? '');
-  const passcode = String(formData.get('passcode') ?? '');
-
-  if (!memberId) redirect('/login?error=1');
-  if (!UUID_RE.test(memberId)) redirect('/login?error=1');
-  if (!rateLimit(memberId)) redirect('/login?error=rate');
-
-  const ok = await authenticate(prodDb, memberId, passcode);
-  if (!ok) redirect('/login?error=1');
-
-  const s = await getSession();
-  s.memberId = ok;
-  await s.save();
-  redirect('/today');
-}
-
 // Type-only export from a "use server" file: erased at compile time (no
 // runtime binding), so it doesn't trip the "use server" files may only
 // export async functions" constraint. Same convention already used by
 // admin/members/actions.ts (CreateMemberInput, AddMemberState, etc.).
 export type LoginState = { ok: true } | { error: 'wrong' | 'rate' } | null;
 
-/** State-returning counterpart to `login` for the keypad LoginFlow (Task 8): delegates the decision to the pure `attemptLogin` core, then sets the session cookie on success instead of redirecting. */
+/** State-returning login action for the keypad LoginFlow (Task 8): delegates the decision to the pure `attemptLogin` core, then sets the session cookie on success instead of redirecting. */
 export async function loginAttempt(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const memberId = String(formData.get('memberId') ?? '');
   const passcode = String(formData.get('passcode') ?? '');
