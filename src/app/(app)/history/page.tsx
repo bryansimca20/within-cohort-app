@@ -1,19 +1,18 @@
 import Link from 'next/link';
 import { desc, eq } from 'drizzle-orm';
-import { FlameIcon, PencilIcon, PlusIcon } from 'lucide-react';
 import { db } from '@/db/client';
 import { dailyCheckins, sessionLogs } from '@/db/schema';
 import { requireMember } from '@/lib/session';
-import { localDateFor } from '@/lib/dates';
-import { COHORT_TIMEZONE } from '@/lib/cohort';
-import { computeStreak } from '@/lib/streak';
-import { groupByDate, formatDate, phaseLabel, sessionTypeLabel } from '@/lib/history';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { getCohortStartDate } from '@/lib/cohort';
+import { getTodayStatus } from '@/lib/today';
+import { groupByDate } from '@/lib/history';
+import { HistoryDayCard } from '@/components/HistoryDayCard';
 
+/** Runner-facing History: streak + active-phase completion stat cards over a reverse-chronological list of expandable day cards. */
 export default async function HistoryPage() {
   const member = await requireMember();
-  const today = localDateFor(COHORT_TIMEZONE, new Date());
+  const startDate = getCohortStartDate();
+  const status = await getTodayStatus(db, member, new Date(), startDate);
 
   const checkins = await db
     .select()
@@ -27,122 +26,42 @@ export default async function HistoryPage() {
     .where(eq(sessionLogs.memberId, member.id))
     .orderBy(desc(sessionLogs.localDate));
 
-  const streak = computeStreak(
-    checkins.map((c) => c.localDate),
-    today,
-  );
   const days = groupByDate(checkins, sessions);
 
+  const isWithin = status.phaseState === 'within';
+  const logged = isWithin ? status.withinLogged : status.baselineLogged;
+  const total = isWithin ? 28 : 14;
+  const pct = total ? Math.round((logged / total) * 100) : 0;
+
   return (
-    <div className="mx-auto flex max-w-md flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-wi-black">History</h1>
+    <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-[22px] pt-[10px]">
+      <h1 className="text-h2 font-bold tracking-[-0.02em] text-wi-black uppercase">History</h1>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-lg border border-wi-line bg-wi-paper p-[14px]">
+          <div className="text-2xl leading-none font-bold text-wi-black">{status.streak}</div>
+          <p className="mt-[5px] text-[10px] font-bold tracking-[0.1em] text-wi-ink-500 uppercase">Day streak</p>
+        </div>
+        <div className="rounded-lg border border-wi-line bg-wi-paper p-[14px]">
+          <div className="text-2xl leading-none font-bold text-wi-black">{pct}%</div>
+          <p className="mt-[5px] text-[10px] font-bold tracking-[0.1em] text-wi-ink-500 uppercase">
+            {isWithin ? 'Within' : 'Baseline'} complete
+          </p>
+        </div>
       </div>
 
-      <Card>
-        <CardContent>
-          <dl className="flex items-center justify-between text-sm">
-            <div>
-              <dt className="flex items-center gap-1.5 text-wi-ink-500">
-                <FlameIcon className="size-4 text-wi-black" />
-                Streak
-              </dt>
-              <dd className="mt-1 font-medium text-wi-black">
-                {streak} day{streak === 1 ? '' : 's'}
-              </dd>
-            </div>
-            <div className="text-right">
-              <dt className="text-wi-ink-500">Days logged</dt>
-              <dd className="mt-1 font-medium text-wi-black">{days.length}</dd>
-            </div>
-          </dl>
-        </CardContent>
-      </Card>
-
       {days.length === 0 ? (
-        <Card>
-          <CardContent className="text-sm text-wi-ink-500">
-            No entries yet.{' '}
-            <Link href="/checkin" className="font-medium text-wi-black underline">
-              Log today&apos;s check-in
-            </Link>
-          </CardContent>
-        </Card>
+        <p className="text-sm text-wi-ink-500">
+          No entries yet.{' '}
+          <Link href="/checkin" className="font-medium text-wi-black underline">
+            Log today&apos;s check-in
+          </Link>
+        </p>
       ) : (
-        <div className="flex flex-col gap-4">
-          {days.map((day) => {
-            const isToday = day.localDate === today;
-            return (
-              <Card key={day.localDate}>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-wi-black">{formatDate(day.localDate)}</p>
-                      <Badge variant="outline" className="mt-1.5">
-                        {phaseLabel(day.phase)}
-                      </Badge>
-                    </div>
-                    {isToday && <span className="text-xs font-medium text-wi-ink-500">Today</span>}
-                  </div>
-
-                  <div className="mt-4 flex flex-col gap-4 border-t border-wi-line pt-4">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs uppercase tracking-[0.2em] text-wi-ink-500">Check-in</p>
-                        {isToday && (
-                          <Link
-                            href="/checkin"
-                            className="flex items-center gap-1 text-xs font-medium text-wi-black underline"
-                          >
-                            <PencilIcon className="size-3" />
-                            Edit
-                          </Link>
-                        )}
-                      </div>
-                      {day.checkin ? (
-                        <p className="mt-1 text-sm leading-relaxed text-wi-black">
-                          Recovery {day.checkin.recovery} · RHR {day.checkin.restingHr} · Sleep{' '}
-                          {day.checkin.sleepHours}h
-                          <br />
-                          Hooper: Sleep {day.checkin.hooperSleep}, Fatigue {day.checkin.hooperFatigue}, Soreness{' '}
-                          {day.checkin.hooperSoreness}, Stress {day.checkin.hooperStress}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-sm text-wi-ink-300">No check-in</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs uppercase tracking-[0.2em] text-wi-ink-500">Sessions</p>
-                        {isToday && (
-                          <Link
-                            href="/session"
-                            className="flex items-center gap-1 text-xs font-medium text-wi-black underline"
-                          >
-                            <PlusIcon className="size-3" />
-                            Add
-                          </Link>
-                        )}
-                      </div>
-                      {day.sessions.length > 0 ? (
-                        <ul className="mt-1 flex flex-col gap-1.5 text-sm text-wi-black">
-                          {day.sessions.map((s) => (
-                            <li key={s.id}>
-                              {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {s.distanceKm} km
-                              {s.tookServing ? ' · Took serving' : ''}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="mt-1 text-sm text-wi-ink-300">No sessions</p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="flex flex-col gap-[10px]">
+          {days.map((day) => (
+            <HistoryDayCard key={day.localDate} day={day} isToday={day.localDate === status.localDate} />
+          ))}
         </div>
       )}
     </div>
