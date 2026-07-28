@@ -65,10 +65,11 @@ export default async function LoginPage({
                 id="passcode"
                 name="passcode"
                 type="text"
-                inputMode="text"
+                inputMode="numeric"
+                pattern="\d{4}"
+                maxLength={4}
                 autoComplete="off"
-                autoCapitalize="characters"
-                placeholder="RUN-1234"
+                placeholder="1234"
                 required
               />
             </div>

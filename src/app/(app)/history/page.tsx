@@ -5,6 +5,7 @@ import { db } from '@/db/client';
 import { dailyCheckins, sessionLogs } from '@/db/schema';
 import { requireMember } from '@/lib/session';
 import { localDateFor } from '@/lib/dates';
+import { COHORT_TIMEZONE } from '@/lib/cohort';
 import { computeStreak } from '@/lib/streak';
 import { groupByDate, formatDate, phaseLabel, sessionTypeLabel } from '@/lib/history';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export default async function HistoryPage() {
   const member = await requireMember();
-  const today = localDateFor(member.timezone, new Date());
+  const today = localDateFor(COHORT_TIMEZONE, new Date());
 
   const checkins = await db
     .select()

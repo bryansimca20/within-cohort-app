@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, boolean, date, integer, numeric, timestamp, pgEnum, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, boolean, integer, numeric, timestamp, pgEnum, uniqueIndex, date } from 'drizzle-orm/pg-core';
 
 export const phaseEnum = pgEnum('phase', ['baseline', 'within']);
 export const sessionTypeEnum = pgEnum('session_type', ['easy','long','tempo','interval','recovery','race','other']);
@@ -9,8 +9,6 @@ export const members = pgTable('members', {
   passcodeHash: text('passcode_hash').notNull(),
   inCohort: boolean('in_cohort').notNull().default(false),
   isAdmin: boolean('is_admin').notNull().default(false),
-  cohortStartDate: date('cohort_start_date'),
-  timezone: text('timezone').notNull().default('Asia/Jakarta'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

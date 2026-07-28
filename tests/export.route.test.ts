@@ -162,11 +162,11 @@ test('fetchCheckinExportRows joins member name and orders by member then date', 
   const { db } = await makeTestDb();
   const [ana] = await db
     .insert(members)
-    .values({ name: 'Zed', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' })
+    .values({ name: 'Zed', passcodeHash: 'x', inCohort: true, isAdmin: false })
     .returning();
   const [ben] = await db
     .insert(members)
-    .values({ name: 'Amy', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' })
+    .values({ name: 'Amy', passcodeHash: 'x', inCohort: true, isAdmin: false })
     .returning();
 
   await db.insert(dailyCheckins).values([
@@ -194,7 +194,7 @@ test('fetchSessionExportRows joins member name and orders by member then date', 
   const { db } = await makeTestDb();
   const [m] = await db
     .insert(members)
-    .values({ name: 'Cal', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' })
+    .values({ name: 'Cal', passcodeHash: 'x', inCohort: true, isAdmin: false })
     .returning();
 
   await db.insert(sessionLogs).values([

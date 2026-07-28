@@ -3,9 +3,8 @@ import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { dailyCheckins, sessionLogs, members } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { getPhase, type PhaseState } from '@/lib/phase';
-import { localDateFor, isValidTimeZone } from '@/lib/dates';
-
-const FALLBACK_TIMEZONE = 'Asia/Jakarta';
+import { localDateFor } from '@/lib/dates';
+import { COHORT_TIMEZONE } from '@/lib/cohort';
 
 type Schema = typeof schema;
 // Any drizzle Postgres-family driver (postgres-js in prod, pglite in tests)
@@ -24,34 +23,19 @@ export type DashboardRow = {
   dayIndex: number;
 };
 
-// Pure, testable core: given a db handle and the "now" instant, resolve the
-// founder-facing status row for every member currently in the cohort. Each
-// member's "today" is their own local date, computed from their own
-// timezone, since cohort members may span zones. Capture-only: this reports
-// completion/status (checked in? how many sessions? what phase/day?) and
-// never derives analytics like training load or trends. A member who hasn't
-// been assigned a cohort start date yet (cohortStartDate === null) is always
-// "pre" rather than calling getPhase with a null start.
-export async function buildDashboard(db: AnyPgDatabase, now: Date): Promise<DashboardRow[]> {
+// Pure, testable core: given a db handle, the "now" instant, and the cohort
+// start date, resolve the founder-facing status row for every member
+// currently in the cohort. The whole cohort shares one Jakarta "today".
+// Capture-only: this reports completion/status (checked in? how many
+// sessions? what phase/day?) and never derives analytics like training load
+// or trends.
+export async function buildDashboard(db: AnyPgDatabase, now: Date, startDate: string): Promise<DashboardRow[]> {
   const cohortMembers = await db.select().from(members).where(eq(members.inCohort, true));
+  const localDate = localDateFor(COHORT_TIMEZONE, now);
+  const { state: phaseState, dayIndex } = getPhase(startDate, localDate);
 
   const rows: DashboardRow[] = [];
   for (const member of cohortMembers) {
-    // Defense-in-depth: a pre-existing/legacy bad timezone must not abort the
-    // whole batch. Fall back to the default zone for this member's computation
-    // rather than throwing or skipping them.
-    const tz = isValidTimeZone(member.timezone) ? member.timezone : FALLBACK_TIMEZONE;
-    const localDate = localDateFor(tz, now);
-
-    let phaseState: PhaseState;
-    let dayIndex: number;
-    if (member.cohortStartDate) {
-      ({ state: phaseState, dayIndex } = getPhase(member.cohortStartDate, localDate));
-    } else {
-      phaseState = 'pre';
-      dayIndex = -1;
-    }
-
     const checkinRows = await db
       .select({ id: dailyCheckins.id })
       .from(dailyCheckins)

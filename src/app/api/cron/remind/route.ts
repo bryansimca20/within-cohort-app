@@ -3,6 +3,7 @@ import { WebPushError } from 'web-push';
 import { db as prodDb } from '@/db/client';
 import { pushSubscriptions } from '@/db/schema';
 import { membersNeedingReminder } from '@/lib/reminders';
+import { getCohortStartDate } from '@/lib/cohort';
 import { sendPush } from '@/lib/push';
 
 // Vercel Cron entry point (see vercel.json for the 07:00 Asia/Jakarta
@@ -18,7 +19,7 @@ export async function GET(request: Request): Promise<Response> {
     return new Response(null, { status: 401 });
   }
 
-  const due = await membersNeedingReminder(prodDb, new Date());
+  const due = await membersNeedingReminder(prodDb, new Date(), getCohortStartDate());
 
   let sent = 0;
   for (const member of due) {

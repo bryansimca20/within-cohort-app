@@ -3,6 +3,7 @@ import { members } from '@/db/schema';
 import { membersNeedingReminder } from '@/lib/reminders';
 import { saveCheckin } from '@/app/(app)/checkin/actions';
 
+const START = '2026-08-01';
 const valid = { recovery: 72, restingHr: 48, sleepHours: 7.5, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 };
 
 // 2026-08-15T02:00:00Z -> 09:00 Asia/Jakarta -> localDate 2026-08-15
@@ -12,9 +13,9 @@ test('an in-cohort member in the active window with no checkin today is returned
   const { db } = await makeTestDb();
   await db
     .insert(members)
-    .values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' });
+    .values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false });
 
-  const due = await membersNeedingReminder(db, NOW);
+  const due = await membersNeedingReminder(db, NOW, START);
   expect(due.map((m) => m.name)).toEqual(['Ana']);
 });
 
@@ -22,11 +23,11 @@ test('a member who already checked in today is not returned', async () => {
   const { db } = await makeTestDb();
   const [ana] = await db
     .insert(members)
-    .values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' })
+    .values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false })
     .returning();
-  await saveCheckin(db, ana, valid, NOW);
+  await saveCheckin(db, ana, valid, NOW, START);
 
-  const due = await membersNeedingReminder(db, NOW);
+  const due = await membersNeedingReminder(db, NOW, START);
   expect(due.find((m) => m.name === 'Ana')).toBeUndefined();
 });
 
@@ -34,53 +35,39 @@ test('a non-inCohort member is not returned', async () => {
   const { db } = await makeTestDb();
   await db
     .insert(members)
-    .values({ name: 'Cas', passcodeHash: 'x', inCohort: false, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' });
+    .values({ name: 'Cas', passcodeHash: 'x', inCohort: false, isAdmin: false });
 
-  const due = await membersNeedingReminder(db, NOW);
+  const due = await membersNeedingReminder(db, NOW, START);
   expect(due.find((m) => m.name === 'Cas')).toBeUndefined();
 });
 
-test('a member with no cohortStartDate (pre) is not returned', async () => {
+test('nobody is due before the cohort start date (pre)', async () => {
   const { db } = await makeTestDb();
   await db
     .insert(members)
-    .values({ name: 'Deb', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: null, timezone: 'Asia/Jakarta' });
+    .values({ name: 'Deb', passcodeHash: 'x', inCohort: true, isAdmin: false });
 
-  const due = await membersNeedingReminder(db, NOW);
-  expect(due.find((m) => m.name === 'Deb')).toBeUndefined();
+  const due = await membersNeedingReminder(db, NOW, '2026-09-01');
+  expect(due).toEqual([]);
 });
 
-test('a member past day 41 (complete) is not returned', async () => {
+test('nobody is due past day 41 (complete)', async () => {
   const { db } = await makeTestDb();
   await db
     .insert(members)
-    .values({ name: 'Eli', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-06-01', timezone: 'Asia/Jakarta' });
+    .values({ name: 'Eli', passcodeHash: 'x', inCohort: true, isAdmin: false });
 
-  const due = await membersNeedingReminder(db, NOW);
-  expect(due.find((m) => m.name === 'Eli')).toBeUndefined();
+  const due = await membersNeedingReminder(db, NOW, '2026-06-01');
+  expect(due).toEqual([]);
 });
 
-test('a member with an invalid (legacy) timezone does not abort the batch and is still evaluated', async () => {
-  const { db } = await makeTestDb();
-  // Bypass validation to simulate a pre-existing bad row (direct insert, not createMember).
-  await db
-    .insert(members)
-    .values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' });
-  await db
-    .insert(members)
-    .values({ name: 'Legacy', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Not/AZone' });
-
-  const due = await membersNeedingReminder(db, NOW);
-  expect(due.map((m) => m.name).sort()).toEqual(['Ana', 'Legacy']);
-});
-
-test('returns id, name, and timezone for a due member', async () => {
+test('returns id and name for a due member', async () => {
   const { db } = await makeTestDb();
   const [ana] = await db
     .insert(members)
-    .values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false, cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta' })
+    .values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false })
     .returning();
 
-  const due = await membersNeedingReminder(db, NOW);
-  expect(due).toEqual([{ id: ana.id, name: 'Ana', timezone: 'Asia/Jakarta' }]);
+  const due = await membersNeedingReminder(db, NOW, START);
+  expect(due).toEqual([{ id: ana.id, name: 'Ana' }]);
 });

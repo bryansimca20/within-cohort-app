@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/db/client';
 import { requireAdmin } from '@/lib/session';
+import { getCohortStartDate } from '@/lib/cohort';
 import { buildDashboard, type DashboardRow } from '@/lib/dashboard';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,7 +15,7 @@ function phaseLabel(row: DashboardRow): string {
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
-  const rows = await buildDashboard(db, new Date());
+  const rows = await buildDashboard(db, new Date(), getCohortStartDate());
 
   const total = rows.length;
   const checkedIn = rows.filter((r) => r.checkedInToday).length;

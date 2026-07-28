@@ -30,14 +30,6 @@ export function AddMemberForm() {
           <Label htmlFor="add-member-name">Name</Label>
           <Input id="add-member-name" type="text" name="name" required />
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="add-member-start">Start date</Label>
-          <Input id="add-member-start" type="date" name="cohortStartDate" />
-        </div>
-        <div className="flex w-40 flex-col gap-1.5">
-          <Label htmlFor="add-member-tz">Timezone</Label>
-          <Input id="add-member-tz" type="text" name="timezone" defaultValue="Asia/Jakarta" />
-        </div>
       </div>
 
       <div className="flex flex-wrap gap-4">

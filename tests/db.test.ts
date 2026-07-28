@@ -5,7 +5,6 @@ test('inserts and reads a member', async () => {
   const { db } = await makeTestDb();
   await db.insert(members).values({
     name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false,
-    cohortStartDate: '2026-08-01', timezone: 'Asia/Jakarta',
   });
   const rows = await db.select().from(members);
   expect(rows).toHaveLength(1);

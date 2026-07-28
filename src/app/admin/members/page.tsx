@@ -7,14 +7,13 @@ import { AddMemberForm, ResetPasscodeButton } from './MemberForms';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // Admin-only roster management: add members (a passcode is generated and
-// shown once), toggle cohort/admin flags and schedule, and reset a member's
-// passcode. Nothing here ever stores or logs a plaintext passcode; only the
-// bcrypt hash is persisted.
+// shown once), toggle cohort/admin flags, and reset a member's passcode.
+// Start date and timezone are cohort-wide config (env / constant), not set
+// per member here. Nothing here ever stores or logs a plaintext passcode;
+// only the bcrypt hash is persisted.
 export default async function AdminMembersPage() {
   await requireAdmin();
 
@@ -67,26 +66,6 @@ export default async function AdminMembersPage() {
                         <Checkbox name="isAdmin" defaultChecked={m.isAdmin} />
                         Admin
                       </label>
-                      <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={`start-${m.id}`}>Start date</Label>
-                        <Input
-                          id={`start-${m.id}`}
-                          type="date"
-                          name="cohortStartDate"
-                          defaultValue={m.cohortStartDate ?? ''}
-                          className="h-9 w-38 text-xs"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={`tz-${m.id}`}>Timezone</Label>
-                        <Input
-                          id={`tz-${m.id}`}
-                          type="text"
-                          name="timezone"
-                          defaultValue={m.timezone}
-                          className="h-9 w-32 text-xs"
-                        />
-                      </div>
                       <Button type="submit" variant="outline" size="sm">
                         Save
                       </Button>

@@ -22,18 +22,18 @@ chart, and the Recovery Intelligence Report are **phase 2 and must not be built 
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Dev server (Turbopack) at `http://localhost:3000` |
-| `npm run build` | Production build (Turbopack) |
-| `npm run start` | Serve the built app |
-| `npm run lint` | ESLint (flat config, `eslint-config-next`) |
-| `npm run test` | Vitest suite once |
-| `npm run test:watch` | Vitest watch mode |
-| `npm run db:generate` | Generate Drizzle migrations from `src/db/schema.ts` into `drizzle/` |
-| `npm run db:migrate` | Apply migrations to `DATABASE_URL` |
-| `npm run seed` | Seed the cohort roster + print one-time passcodes (edit the roster first) |
-| `npx shadcn@latest add <component>` | Add a shadcn/ui primitive |
+| `pnpm dev` | Dev server (Turbopack) at `http://localhost:3000` |
+| `pnpm build` | Production build (Turbopack) |
+| `pnpm start` | Serve the built app |
+| `pnpm lint` | ESLint (flat config, `eslint-config-next`) |
+| `pnpm test` | Vitest suite once |
+| `pnpm test:watch` | Vitest watch mode |
+| `pnpm db:generate` | Generate Drizzle migrations from `src/db/schema.ts` into `drizzle/` |
+| `pnpm db:migrate` | Apply migrations to `DATABASE_URL` |
+| `pnpm seed` | Seed the cohort roster + print one-time passcodes (edit the roster first) |
+| `pnpm dlx shadcn@latest add <component>` | Add a shadcn/ui primitive |
 
-Package manager is **npm** (`package-lock.json` is source of truth). No `pnpm` / `yarn`.
+Package manager is **pnpm** (`pnpm-lock.yaml` is source of truth; pinned via the `packageManager` field in `package.json`). No `npm` / `yarn` lockfiles. pnpm forwards bare flags to the script, so `pnpm dev --port 3003` works directly (no `--` separator). Native build scripts (esbuild, sharp, unrs-resolver) are pre-approved via `pnpm.onlyBuiltDependencies`.
 
 ## 3. Environment
 
@@ -44,8 +44,9 @@ Package manager is **npm** (`package-lock.json` is source of truth). No `pnpm` /
 | Key | Purpose |
 | --- | --- |
 | `DATABASE_URL` | Serverless Postgres (Neon / Vercel Postgres) connection string |
+| `COHORT_START_DATE` | Cohort-wide day 0 of the phase calendar, `YYYY-MM-DD` (Jakarta). Same for everyone, so it lives here, not in a column |
 | `SESSION_SECRET` | iron-session cookie signing secret, **32+ chars** |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Web Push (generate with `npx web-push generate-vapid-keys`) |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Web Push (generate with `pnpm dlx web-push generate-vapid-keys`) |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Same value as `VAPID_PUBLIC_KEY`, deliberately client-exposed for `pushManager.subscribe()` |
 | `CRON_SECRET` | Bearer token the reminder cron route checks |
 
@@ -157,10 +158,10 @@ scripts/                   # seed.ts, gen-icons.mjs
   `Input` + `Label`, a dropdown is `Select`, a checkbox is `Checkbox`, a button is
   `Button`, a panel is `Card`. Compose and wrap these — do not re-invent them.
 - `ui/` primitives are **WITHIN-restyled and owned in-repo**. Re-running
-  `npx shadcn@latest add <component>` overwrites the file with the vanilla version;
+  `pnpm dlx shadcn@latest add <component>` overwrites the file with the vanilla version;
   after any re-add, reapply the WITHIN monochrome restyle and diff before committing.
 - If a needed shadcn component is **not installed**, install it
-  (`npx shadcn@latest add <component>`). If a component does **not exist in shadcn at
+  (`pnpm dlx shadcn@latest add <component>`). If a component does **not exist in shadcn at
   all**, surface options to the user before hand-rolling one.
 - **Icons: `lucide-react` only.** Stroke, ~2px, `currentColor`, sized to adjacent type.
   Never emoji, never a Unicode pictograph. The logomark is a brand mark, not an icon.
@@ -202,13 +203,13 @@ The durable brand guardrail. Source of truth: the Claude Design project
   `expect` without import).
 - **Database tests use pglite, not mocks.** `makeTestDb()` in
   [tests/helpers/testDb.ts](tests/helpers/testDb.ts) spins an in-memory Postgres and runs
-  the real `drizzle/` migrations. Run `npm run db:generate` before testing new schema.
+  the real `drizzle/` migrations. Run `pnpm db:generate` before testing new schema.
 - **What to test:** pure logic and pure cores — `phase`, `dates`, `streak`, `validation`,
   `csv`, `dashboard`, `history` grouping, and every `save*`/`*Rows`/`create*` db-param
   core (insert/read/upsert behavior, phase stamping, guard rejections) against pglite.
   Tests must assert real inserted/returned data, not that a function was called.
 - **What not to test:** framework glue. Server-action wrappers, pages, and route handlers
-  that depend on `cookies()`/`redirect()`/`requireMember` are verified by `npm run build`
+  that depend on `cookies()`/`redirect()`/`requireMember` are verified by `pnpm build`
   + `tsc`, not by mock-heavy tests. Extract the testable logic into a pure core instead.
 - **TDD.** Write the failing test, run it red, implement, run it green, then commit.
 - Test output must be pristine — a stray warning is a finding.
@@ -221,14 +222,19 @@ The durable brand guardrail. Source of truth: the Claude Design project
 - **Capture-only.** No analytics, charts, training-load, trends, or report generation in
   v1. If a task drifts toward computing insight from the logs, stop — that is phase 2.
 - **Phase stamping is immutable.** Each check-in / session stores the `phase`
-  (`baseline` | `within`) computed at write time from the member's `cohortStartDate`.
-  Windows: day 0-13 baseline, 14-41 within, `<0` blocked (pre-start), `>=42` read-only
-  (complete). Never recompute a stored row's phase for display — read the stamped value.
-- **Timezone.** All "today" uses the member's `timezone` (default `Asia/Jakarta`) via
-  `localDateFor`. `localDate` is that timezone's calendar date. Never server-local time.
+  (`baseline` | `within`) computed at write time from the cohort-wide start date
+  (`COHORT_START_DATE` env, read via `getCohortStartDate()`). Windows: day 0-13 baseline,
+  14-41 within, `<0` blocked (pre-start), `>=42` read-only (complete). Never recompute a
+  stored row's phase for display — read the stamped value. Pure cores take the start date
+  as an explicit `startDate` param; only the `"use server"` wrapper / page reads the env.
+- **Timezone.** The whole cohort is on Jakarta time. All "today" uses the
+  `COHORT_TIMEZONE` constant (`Asia/Jakarta`, in [src/lib/cohort.ts](src/lib/cohort.ts))
+  via `localDateFor`. `localDate` is that calendar date. Never server-local time, never a
+  per-member timezone.
 - **Edit policy.** Same-local-day entries are editable; older entries are read-only. No
   backfill in v1 (a missed day is a visible gap, not an invented row).
-- **Auth.** Store only the bcrypt passcode hash. A freshly generated plaintext is shown
+- **Auth.** Login is member-name select + a **4-digit passcode** (`generatePasscode` emits
+  1000-9999). Store only the bcrypt passcode hash. A freshly generated plaintext is shown
   once (seed console or an admin `useActionState` return) and never logged or put in a
   URL. Every admin action/page calls `requireAdmin()` first; the runner area calls
   `requireMember()`. The login route is rate-limited.

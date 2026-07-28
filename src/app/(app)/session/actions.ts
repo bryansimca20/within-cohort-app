@@ -8,6 +8,7 @@ import type * as schema from '@/db/schema';
 import { sessionSchema } from '@/lib/validation';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
+import { COHORT_TIMEZONE, getCohortStartDate } from '@/lib/cohort';
 import { requireMember } from '@/lib/session';
 
 type Schema = typeof schema;
@@ -23,14 +24,11 @@ type AnyPgDatabase = PgDatabase<PgQueryResultHKT, Schema>;
 // are allowed (no unique constraint), so this always inserts and never
 // upserts. No cookies, no redirects; those live in `saveSessionAction` below
 // so this stays trivial to exercise against the pglite test harness.
-export async function saveSession(db: AnyPgDatabase, member: Member, input: unknown, now: Date): Promise<void> {
+export async function saveSession(db: AnyPgDatabase, member: Member, input: unknown, now: Date, startDate: string): Promise<void> {
   const parsed = sessionSchema.parse(input);
-  const localDate = localDateFor(member.timezone, now);
+  const localDate = localDateFor(COHORT_TIMEZONE, now);
 
-  if (!member.cohortStartDate) {
-    throw new Error('Cohort has not started yet');
-  }
-  const { state } = getPhase(member.cohortStartDate, localDate);
+  const { state } = getPhase(startDate, localDate);
   if (state === 'pre') {
     throw new Error('Cohort has not started yet');
   }
@@ -85,7 +83,7 @@ export async function saveSessionAction(formData: FormData): Promise<void> {
     tookServing: tookServingRaw === null ? undefined : tookServingRaw === 'true' || tookServingRaw === 'on',
     note: formData.get('note') ?? undefined,
   };
-  await saveSession(prodDb, member, input, new Date());
+  await saveSession(prodDb, member, input, new Date(), getCohortStartDate());
   revalidatePath('/today');
   redirect('/today');
 }

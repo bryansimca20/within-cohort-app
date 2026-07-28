@@ -2,6 +2,7 @@ import { RouteIcon } from 'lucide-react';
 import { requireMember } from '@/lib/session';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
+import { COHORT_TIMEZONE, getCohortStartDate } from '@/lib/cohort';
 import { NumberField } from '@/components/NumberField';
 import { RpeSlider } from '@/components/RpeSlider';
 import { SessionTypeField } from '@/components/SessionTypeField';
@@ -18,13 +19,9 @@ export default async function SessionPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const member = await requireMember();
-  const localDate = localDateFor(member.timezone, new Date());
-
-  // A member who hasn't been assigned a cohort start date yet is always
-  // "pre", same treatment as /today and /checkin: never call getPhase with
-  // a null start.
-  const state = member.cohortStartDate ? getPhase(member.cohortStartDate, localDate).state : 'pre';
+  await requireMember();
+  const localDate = localDateFor(COHORT_TIMEZONE, new Date());
+  const state = getPhase(getCohortStartDate(), localDate).state;
 
   if (state === 'pre' || state === 'complete') {
     return (

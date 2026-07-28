@@ -10,8 +10,6 @@ async function makeMember(db: Awaited<ReturnType<typeof makeTestDb>>['db'], name
       passcodeHash: 'x',
       inCohort: true,
       isAdmin: false,
-      cohortStartDate: '2026-08-01',
-      timezone: 'Asia/Jakarta',
     })
     .returning();
   return member;

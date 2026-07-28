@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CheckCircle2Icon, FlameIcon, FootprintsIcon, SunriseIcon } from 'lucide-react';
 import { db } from '@/db/client';
 import { requireMember } from '@/lib/session';
+import { getCohortStartDate } from '@/lib/cohort';
 import { getTodayStatus, type TodayStatus } from '@/lib/today';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,9 +23,9 @@ function formatCohortStart(dateISO: string): string {
   });
 }
 
-function badgeCopy(status: TodayStatus, cohortStartDate: string | null): string {
+function badgeCopy(status: TodayStatus, cohortStartDate: string): string {
   if (status.phaseState === 'pre') {
-    return cohortStartDate ? `Starts ${formatCohortStart(cohortStartDate)}` : 'Not started';
+    return `Starts ${formatCohortStart(cohortStartDate)}`;
   }
   if (status.phaseState === 'baseline') {
     return `Baseline · Day ${status.dayIndex + 1} / 14`;
@@ -37,8 +38,9 @@ function badgeCopy(status: TodayStatus, cohortStartDate: string | null): string 
 
 export default async function TodayPage() {
   const member = await requireMember();
-  const status = await getTodayStatus(db, member, new Date());
-  const badge = badgeCopy(status, member.cohortStartDate);
+  const startDate = getCohortStartDate();
+  const status = await getTodayStatus(db, member, new Date(), startDate);
+  const badge = badgeCopy(status, startDate);
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6">

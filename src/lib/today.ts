@@ -4,6 +4,7 @@ import { dailyCheckins, sessionLogs, type Member } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { getPhase, type PhaseState } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
+import { COHORT_TIMEZONE } from '@/lib/cohort';
 import { computeStreak } from '@/lib/streak';
 
 type Schema = typeof schema;
@@ -23,23 +24,14 @@ export type TodayStatus = {
   phaseComplete: boolean;
 };
 
-// Pure, testable core: given a db handle, the member, and the "now" instant,
-// resolve everything the /today page needs in one place: phase window,
-// whether today's check-in exists, how many sessions were logged today, and
-// the current check-in streak. A member who hasn't been assigned a cohort
-// start date yet (cohortStartDate === null) is always "pre" rather than
-// calling getPhase with a null start, which would blow up date arithmetic.
-export async function getTodayStatus(db: AnyPgDatabase, member: Member, now: Date): Promise<TodayStatus> {
-  const localDate = localDateFor(member.timezone, now);
+// Pure, testable core: given a db handle, the member, the "now" instant, and
+// the cohort start date, resolve everything the /today page needs in one
+// place: phase window, whether today's check-in exists, how many sessions
+// were logged today, and the current check-in streak.
+export async function getTodayStatus(db: AnyPgDatabase, member: Member, now: Date, startDate: string): Promise<TodayStatus> {
+  const localDate = localDateFor(COHORT_TIMEZONE, now);
 
-  let phaseState: PhaseState;
-  let dayIndex: number;
-  if (member.cohortStartDate) {
-    ({ state: phaseState, dayIndex } = getPhase(member.cohortStartDate, localDate));
-  } else {
-    phaseState = 'pre';
-    dayIndex = -1;
-  }
+  const { state: phaseState, dayIndex } = getPhase(startDate, localDate);
 
   // Pull every check-in date for this member once: it doubles as the input
   // to computeStreak and tells us whether today specifically is done,

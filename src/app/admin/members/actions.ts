@@ -7,7 +7,6 @@ import { members, type Member } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
 import { generatePasscode, hashPasscode } from '@/lib/passcode';
-import { isValidTimeZone } from '@/lib/dates';
 
 type Schema = typeof schema;
 // Any drizzle Postgres-family driver (postgres-js in prod, pglite in tests)
@@ -20,8 +19,6 @@ export type CreateMemberInput = {
   name: string;
   inCohort: boolean;
   isAdmin: boolean;
-  cohortStartDate: string | null;
-  timezone: string;
 };
 
 // Pure, testable core: generate a plaintext passcode, hash it, and insert a
@@ -32,10 +29,6 @@ export async function createMember(
   db: AnyPgDatabase,
   input: CreateMemberInput,
 ): Promise<{ member: Member; plaintext: string }> {
-  if (!isValidTimeZone(input.timezone)) {
-    throw new Error(`Invalid timezone: ${input.timezone}`);
-  }
-
   const plaintext = generatePasscode();
   const passcodeHash = await hashPasscode(plaintext);
 
@@ -46,8 +39,6 @@ export async function createMember(
       passcodeHash,
       inCohort: input.inCohort,
       isAdmin: input.isAdmin,
-      cohortStartDate: input.cohortStartDate,
-      timezone: input.timezone,
     })
     .returning();
 
@@ -69,28 +60,21 @@ export async function resetMemberPasscode(db: AnyPgDatabase, memberId: string): 
 export type UpdateMemberFlagsInput = {
   inCohort: boolean;
   isAdmin: boolean;
-  cohortStartDate: string | null;
-  timezone: string;
 };
 
-// Pure, testable core: update a member's cohort flags, start date, and
-// timezone. Never touches passcodeHash.
+// Pure, testable core: update a member's cohort flags. Never touches
+// passcodeHash. Start date and timezone are cohort-wide config, not
+// per-member, so they are not settable here.
 export async function updateMemberFlags(
   db: AnyPgDatabase,
   memberId: string,
   input: UpdateMemberFlagsInput,
 ): Promise<Member> {
-  if (!isValidTimeZone(input.timezone)) {
-    throw new Error(`Invalid timezone: ${input.timezone}`);
-  }
-
   const [member] = await db
     .update(members)
     .set({
       inCohort: input.inCohort,
       isAdmin: input.isAdmin,
-      cohortStartDate: input.cohortStartDate,
-      timezone: input.timezone,
     })
     .where(eq(members.id, memberId))
     .returning();
@@ -122,15 +106,11 @@ export async function addMemberAction(_prevState: AddMemberState, formData: Form
 
   const inCohort = formData.get('inCohort') === 'on';
   const isAdmin = formData.get('isAdmin') === 'on';
-  const cohortStartDateRaw = String(formData.get('cohortStartDate') ?? '').trim();
-  const timezone = String(formData.get('timezone') ?? '').trim() || 'Asia/Jakarta';
 
   const { member, plaintext } = await createMember(prodDb, {
     name,
     inCohort,
     isAdmin,
-    cohortStartDate: cohortStartDateRaw || null,
-    timezone,
   });
 
   revalidatePath('/admin/members');
@@ -168,14 +148,10 @@ export async function updateFlagsAction(formData: FormData): Promise<void> {
 
   const inCohort = formData.get('inCohort') === 'on';
   const isAdmin = formData.get('isAdmin') === 'on';
-  const cohortStartDateRaw = String(formData.get('cohortStartDate') ?? '').trim();
-  const timezone = String(formData.get('timezone') ?? '').trim() || 'Asia/Jakarta';
 
   await updateMemberFlags(prodDb, memberId, {
     inCohort,
     isAdmin,
-    cohortStartDate: cohortStartDateRaw || null,
-    timezone,
   });
 
   revalidatePath('/admin/members');

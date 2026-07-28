@@ -5,6 +5,7 @@ import { dailyCheckins } from '@/db/schema';
 import { requireMember } from '@/lib/session';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
+import { COHORT_TIMEZONE, getCohortStartDate } from '@/lib/cohort';
 import { NumberField } from '@/components/NumberField';
 import { HooperSlider } from '@/components/HooperSlider';
 import { Button } from '@/components/ui/button';
@@ -20,11 +21,8 @@ export default async function CheckinPage({
 }) {
   const { error } = await searchParams;
   const member = await requireMember();
-  const localDate = localDateFor(member.timezone, new Date());
-
-  // A member who hasn't been assigned a cohort start date yet is always
-  // "pre", same treatment as /today: never call getPhase with a null start.
-  const state = member.cohortStartDate ? getPhase(member.cohortStartDate, localDate).state : 'pre';
+  const localDate = localDateFor(COHORT_TIMEZONE, new Date());
+  const state = getPhase(getCohortStartDate(), localDate).state;
 
   if (state === 'pre' || state === 'complete') {
     return (
