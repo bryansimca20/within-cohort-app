@@ -51,6 +51,26 @@ export async function login(formData: FormData) {
   redirect('/today');
 }
 
+// Type-only export from a "use server" file: erased at compile time (no
+// runtime binding), so it doesn't trip the "use server" files may only
+// export async functions" constraint. Same convention already used by
+// admin/members/actions.ts (CreateMemberInput, AddMemberState, etc.).
+export type LoginState = { ok: true } | { error: 'wrong' | 'rate' } | null;
+
+/** State-returning counterpart to `login` for the keypad LoginFlow (Task 8): same guard/rate-limit/authenticate flow, but resolves to a LoginState instead of redirecting. */
+export async function loginAttempt(_prev: LoginState, formData: FormData): Promise<LoginState> {
+  const memberId = String(formData.get('memberId') ?? '');
+  const passcode = String(formData.get('passcode') ?? '');
+  if (!memberId || !UUID_RE.test(memberId)) return { error: 'wrong' };
+  if (!rateLimit(memberId)) return { error: 'rate' };
+  const ok = await authenticate(prodDb, memberId, passcode);
+  if (!ok) return { error: 'wrong' };
+  const s = await getSession();
+  s.memberId = ok;
+  await s.save();
+  return { ok: true };
+}
+
 export async function logout() {
   const s = await getSession();
   s.destroy();
