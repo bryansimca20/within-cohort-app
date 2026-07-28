@@ -1,46 +1,20 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* WITHIN — monochrome tokens.
-   Verbatim values from ../presentations/design-system/deck.css. No hue,
-   ever. Differentiation comes from weight and contrast, not color. */
-:root {
-  --color-black: #000000;
-  --color-charcoal: #191919;
-  --color-paper-dim: #f2f2f2;
-  --color-white: #ffffff;
-
-  --background: var(--color-paper-dim);
-  --foreground: var(--color-black);
-
-  /* Monochrome, light-only by design (see WITHIN Design System in
-     CLAUDE.md): never a `dark:` variant. Pin native controls/scrollbars to
-     light so a phone set to system dark mode doesn't render them dark
-     against this always-light UI. */
-  color-scheme: light;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), sans-serif;
-}
-
 /* ============================================================
-   shadcn/ui (Base UI) primitive layer — WITHIN monochrome bridge.
-   Added in Task R0. The tokens above are untouched; these are additive.
-   src/components/ui/* primitives read from the tokens declared below.
-   Light-only throughout: see the `color-scheme: light` note above — the
-   app never ships a `dark:` variant.
+   WITHIN Design System — token layer.
+   Kept in lockstep with ../within-website-coming-soon/src/app/globals.css
+   (the shared source of truth). Two deliberate divergences from that file,
+   both because the cohort app is a capture PWA, not the marketing site:
+     1. No `@import "shadcn/tailwind.css";` — cohort has no `shadcn` dep and
+        its owned primitives don't need base-nova's base layer.
+     2. No `motion` package. The motion *tokens* below still ship so any
+        micro-interaction stays on-system, but there is no scroll-reveal.
+   Source of truth: Claude Design project
+   `9a760727-dad3-4223-afd7-78934815824f` ("Within Design System").
    ============================================================ */
 
-/* ---- WITHIN raw utilities exposed to Tailwind (bg-wi-*, text-wi-*, border-wi-*) ---- */
+/* ---- WITHIN raw utilities exposed to Tailwind (bg-wi-*, text-*, etc.) ---- */
 @theme {
   --color-wi-black: #000000;
   --color-wi-charcoal: #191919;
@@ -52,28 +26,65 @@ body {
   --color-wi-paper-dim: #f2f2f2;
   --color-wi-paper: #ffffff;
 
-  /* Micro label size (eyebrows, field labels, table headers). */
+  /* Status colors: the intentional non-monochrome exceptions. Errors read red, success green. */
+  --color-wi-error: #ef4444;
+  --color-wi-success: #22c55e;
+
+  /* on-dark tints as utilities (text-wi-on-dark-2, border-wi-on-dark-line, bg-wi-on-dark-fill) */
+  --color-wi-on-dark-1: rgba(255, 255, 255, 1);
+  --color-wi-on-dark-2: rgba(255, 255, 255, 0.64);
+  --color-wi-on-dark-3: rgba(255, 255, 255, 0.4);
+  --color-wi-on-dark-line: rgba(255, 255, 255, 0.16);
+  --color-wi-on-dark-fill: rgba(255, 255, 255, 0.08);
+
+  --text-display-2xl: 96px;
+  --text-display-xl: 72px;
+  --text-display-lg: 56px;
+  --text-display-md: 40px;
+  --text-h1: 34px;
+  --text-h2: 26px;
+  --text-h3: 20px;
+  --text-body: 16px;
+  --text-body-lg: 18px;
   --text-2xs: 11px;
 }
 
-/* ---- shadcn semantic tokens → Tailwind utilities (bg-primary, text-muted-foreground, ...) ---- */
+/* ---- shadcn → Tailwind color/token bridge (kept from scaffold) ---- */
 @theme inline {
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-heading: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -81,30 +92,135 @@ body {
 }
 
 :root {
-  /* ---- radius (WITHIN, prefixed so it never collides with shadcn --radius-*) ---- */
+  /* ---- WITHIN base scale (ink → paper) ---- */
+  --wi-black: #000000;
+  --wi-charcoal: #191919;
+  --wi-ink-700: #3d3d3d;
+  --wi-ink-500: #6b6b6b;
+  --wi-ink-300: #a3a3a3;
+  --wi-line: #d6d6d6;
+  --wi-mist: #e6e6e6;
+  --wi-paper-dim: #f2f2f2;
+  --wi-paper: #ffffff;
+
+  /* ---- on-dark tints ---- */
+  --wi-on-dark-1: rgba(255, 255, 255, 1);
+  --wi-on-dark-2: rgba(255, 255, 255, 0.64);
+  --wi-on-dark-3: rgba(255, 255, 255, 0.4);
+  --wi-on-dark-line: rgba(255, 255, 255, 0.16);
+  --wi-on-dark-fill: rgba(255, 255, 255, 0.08);
+
+  /* ---- WITHIN semantic ---- */
+  --wi-text-strong: var(--wi-black);
+  --wi-text-body: var(--wi-ink-700);
+  --wi-text-muted: var(--wi-ink-500);
+  --wi-text-faint: var(--wi-ink-300);
+
+  /* ---- DS semantic aliases (unprefixed names the Coming Soon design references) ---- */
+  --text-strong: var(--wi-black);
+  --text-muted: var(--wi-ink-500);
+  --text-faint: var(--wi-ink-300);
+  --border-default: var(--wi-line);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- type ---- */
+  --wi-weight-regular: 400;
+  --wi-weight-medium: 500;
+  --wi-weight-semibold: 600;
+  --wi-weight-bold: 700;
+  --wi-weight-black: 900;
+  --wi-leading-tight: 0.98;
+  --wi-leading-snug: 1.12;
+  --wi-leading-normal: 1.5;
+  --wi-tracking-tight: -0.03em;
+  --wi-tracking-wide: 0.04em;
+  --wi-tracking-label: 0.14em;
+
+  /* ---- radius (WITHIN, prefixed to avoid clashing with shadcn --radius-*) ---- */
   --wi-radius-control: 6px;
   --wi-radius-card: 10px;
 
-  /* ---- low, tight, neutral shadows (cards, popovers) ---- */
+  /* ---- borders ---- */
+  --wi-border-width: 1px;
+  --wi-border-width-strong: 1.5px;
+  --wi-border-width-heavy: 2px;
+
+  /* ---- shadows (low, tight, neutral) ---- */
   --wi-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
   --wi-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
+  --wi-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+  --wi-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.16);
+
+  /* ---- motion ---- */
+  --wi-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --wi-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --wi-duration-fast: 120ms;
+  --wi-duration-base: 180ms;
+  --wi-duration-slow: 320ms;
+  --wi-press-scale: 0.97;
+
+  /* ---- layout ---- */
+  --wi-container-max: 1200px;
+  --wi-container-narrow: 720px;
 
   /* ---- shadcn semantic bridge → WITHIN (monochrome, no hue) ---- */
-  --radius: 0.625rem; /* 10px, shadcn's own --radius-lg — cards */
-  --primary: var(--color-black);
-  --primary-foreground: var(--color-white);
-  --secondary: var(--color-wi-mist);
-  --secondary-foreground: var(--color-black);
-  --muted: var(--color-wi-mist);
-  --muted-foreground: var(--color-wi-ink-500);
-  --accent: var(--color-wi-mist);
-  --accent-foreground: var(--color-black);
-  --destructive: var(--color-charcoal);
-  --border: var(--color-wi-line);
-  --input: var(--color-wi-line);
-  --ring: var(--color-black);
-  --card: var(--color-white);
-  --card-foreground: var(--color-black);
-  --popover: var(--color-white);
-  --popover-foreground: var(--color-black);
+  --radius: 0.625rem; /* 10px — cards via rounded-lg */
+  --background: var(--wi-paper-dim);
+  --foreground: var(--wi-charcoal);
+  --card: var(--wi-paper);
+  --card-foreground: var(--wi-black);
+  --popover: var(--wi-paper);
+  --popover-foreground: var(--wi-black);
+  --primary: var(--wi-black);
+  --primary-foreground: var(--wi-paper);
+  --secondary: var(--wi-mist);
+  --secondary-foreground: var(--wi-black);
+  --muted: var(--wi-mist);
+  --muted-foreground: var(--wi-ink-500);
+  --accent: var(--wi-mist);
+  --accent-foreground: var(--wi-black);
+  --destructive: var(--wi-charcoal);
+  --border: var(--wi-line);
+  --input: var(--wi-line);
+  --ring: var(--wi-black);
+  --chart-1: #a3a3a3;
+  --chart-2: #6b6b6b;
+  --chart-3: #3d3d3d;
+  --chart-4: #191919;
+  --chart-5: #000000;
+  --sidebar: var(--wi-paper);
+  --sidebar-foreground: var(--wi-charcoal);
+  --sidebar-primary: var(--wi-black);
+  --sidebar-primary-foreground: var(--wi-paper);
+  --sidebar-accent: var(--wi-mist);
+  --sidebar-accent-foreground: var(--wi-black);
+  --sidebar-border: var(--wi-line);
+  --sidebar-ring: var(--wi-black);
+
+  /* Monochrome, light-only by design (see WITHIN Design System in CLAUDE.md):
+     never a `dark:` variant. Pin native controls/scrollbars to light so a phone
+     set to system dark mode doesn't render them dark against this always-light UI. */
+  color-scheme: light;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 16px;
+    line-height: var(--wi-leading-normal);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    @apply font-sans;
+  }
+  ::selection {
+    background: var(--wi-black);
+    color: var(--wi-paper);
+  }
 }

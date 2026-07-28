@@ -97,6 +97,7 @@ src/
 │   └── api/               # push/subscribe, cron/remind (route handlers)
 ├── components/
 │   ├── ui/                # shadcn/ui primitives (WITHIN-restyled, owned in-repo)
+│   ├── brand/             # WITHIN brand mark (WithinLogo) — see WITHIN Design System
 │   └── *.tsx              # Composed feature components (forms, sliders, install card)
 ├── db/                    # schema.ts, client.ts (lazy Proxy)
 └── lib/                   # phase, dates, validation, session, passcode, streak, today,
@@ -167,6 +168,9 @@ scripts/                   # seed.ts, gen-icons.mjs
   Never emoji, never a Unicode pictograph. The logomark is a brand mark, not an icon.
 - Feature components (forms, the install card) **compose** `ui/` primitives; they do not
   duplicate primitive styling.
+- For the logo, use `WithinLogo` in [src/components/brand/](src/components/brand/) — never
+  hand-draw the mark. Headings and eyebrows are class recipes on the type scale (see WITHIN
+  Design System), not components, until a screen repeats one.
 
 **Styling**
 - **Tailwind utilities only — never `style={}` for a static value.** Use arbitrary
@@ -177,22 +181,66 @@ scripts/                   # seed.ts, gen-icons.mjs
 
 ## WITHIN Design System
 
-The durable brand guardrail. Source of truth: the Claude Design project
-`9a760727-dad3-4223-afd7-78934815824f` ("Within Design System"). Token values mirror
+The durable brand guardrail — **the same system that ships in
+`../within-website-coming-soon`**. Both apps carry an identical token layer; keep them in
+lockstep (port new tokens from that app, never re-derive them). Tokens live in
+[src/app/globals.css](src/app/globals.css); brand primitives in
+[src/components/brand/](src/components/brand/). Source of truth: the Claude Design project
+`9a760727-dad3-4223-afd7-78934815824f` ("Within Design System"); values mirror
 `../presentations/design-system/`.
 
-- **Color — monochrome, no hue anywhere.** The whole palette is `#000000` · `#191919` ·
-  `#f2f2f2` · `#ffffff` (+ documented greys). Hierarchy comes from weight, fill, and
-  contrast, never chroma. Status (success/error, checked-in/missing) is monochrome.
-  Never invent a color, never `oklch`, never a `dark:` variant.
-- **Type — Inter only, no italics** at any weight. Hero/label register: 700, UPPERCASE,
-  tight tracking. Body: 400/500, leading 1.5.
-- **Voice — honest, introverted, high-performing.** Short declarative statements. Facts
-  over adjectives. **No em dashes.** No emoji, no exclamation marks, no hype words.
-- **Form.** Near-square corners: 6px controls, 10px cards. Hairline borders; emphasis
-  borders full black at 1.5-2px. No gradients, no textures, no decorative illustration.
-- **Logo.** Use the PNGs in `../presentations/design-system/assets/logos/`. Never redraw,
-  trace, or recolour the mark.
+**Where the system lives — reach for a token/utility, never hard-code a raw value.**
+
+| Layer | Defined as (in `globals.css`) | Use it as |
+| --- | --- | --- |
+| Raw palette | `--color-wi-*` (`@theme`) | `bg-wi-black`, `text-wi-ink-500`, `border-wi-line`, `bg-wi-paper` |
+| On-dark tints | `--color-wi-on-dark-*` (`@theme`) | `text-wi-on-dark-2`, `border-wi-on-dark-line` on black panels |
+| Semantic (shadcn bridge) | `--primary`, `--muted-foreground`, `--border`, … | `bg-primary`, `text-muted-foreground`, `bg-card`, `border-border` |
+| Type scale | `--text-display-2xl … --text-2xs` (`@theme`) | `text-display-lg`, `text-h1`, `text-body`, `text-2xs` |
+| Radius / shadow / motion / type tokens | `--wi-radius-*`, `--wi-shadow-*`, `--wi-ease-*`, `--wi-tracking-*` (`:root`) | `rounded-[6px]` controls / `rounded-lg` cards; arbitrary-value classes reading the token |
+
+**Brand primitives (`src/components/brand/`).**
+- `WithinLogo` — the official logotype/logomark PNGs from `public/brand/`. Prefer it over
+  any hand-drawn mark.
+
+There is deliberately **no** `WiHero` / `WiEyebrow` component: this app has no marketing
+hero, and the uppercase micro-label is a one-line class recipe (see Type below), not yet
+worth a component. Componentize a heading or eyebrow only when a real screen repeats it 3+
+times (the abstraction rule).
+
+**Color — monochrome, no hue anywhere.** The whole palette is `#000000` · `#191919` ·
+`#f2f2f2` · `#ffffff` (+ documented ink/line/mist greys). Hierarchy comes from weight, fill,
+and contrast, never chroma. Status (success/error, checked-in/missing) is monochrome.
+Never invent a color, never `oklch`, never a `dark:` variant. Default body text is charcoal
+(`--foreground`); reserve full black (`text-wi-black` / `text-card-foreground`) for emphasis.
+
+**Type — Inter only, no italics** at any weight (upright everywhere). Two registers:
+hero/label = 700, UPPERCASE, tight tracking (`font-bold uppercase tracking-[0.14em]`, e.g.
+`text-2xs` eyebrows / `text-h1` titles); body = 400/500, leading 1.5. The scale is exposed
+as `text-display-2xl … text-2xs`.
+
+**Voice — honest, introverted, high-performing.** Short declarative statements. Facts
+over adjectives. **No em dashes.** No emoji, no exclamation marks, no hype words.
+
+**Form.** Near-square corners: 6px controls (`--wi-radius-control`), 10px cards
+(`rounded-lg`). Hairline `#d6d6d6` borders; emphasis borders full black at 1.5-2px. Low,
+tight, neutral shadows (`--wi-shadow-sm/md/lg`) — no gradients, no textures, no decorative
+illustration.
+
+**Motion.** The motion *tokens* ship (`--wi-ease-out`, `--wi-duration-*`, `--wi-press-scale`)
+so any micro-interaction stays on-system: quick, precise, **no visible bounce**, short
+opacity/transform tweens only. Unlike the marketing site this app deliberately does **not**
+add the `motion` package or scroll-reveal animation — it's a 7 a.m. one-handed capture tool,
+so content appears instantly.
+
+**Logo.** Always use `WithinLogo` (PNGs in `public/brand/`). **Never redraw, trace, or
+recolour the mark.**
+
+**Intentional divergences from the coming-soon copy — do not "fix" them.** cohort's
+`globals.css` omits `@import "shadcn/tailwind.css";` (no `shadcn` dep; owned primitives
+don't need base-nova's base layer) and the app has no `motion` package. The token layer is
+otherwise identical.
+
 - Built for one-handed phone use at 7 a.m.: large tap targets, minimal typing, sliders
   over keyboards.
 
