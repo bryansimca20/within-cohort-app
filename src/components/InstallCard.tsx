@@ -59,13 +59,16 @@ export function InstallCard() {
 
   if (!visible) return null;
 
+  // Rendered only on the black Today screen (see today/page.tsx), so the
+  // default light-card styling is overridden here to the on-dark tokens
+  // instead of being made a light card floating on black.
   return (
-    <Card size="sm">
+    <Card size="sm" className="border-wi-on-dark-line bg-wi-on-dark-fill">
       <CardContent className="flex items-center gap-3">
-        <Share className="size-4 shrink-0 text-wi-black" />
-        <p className="flex-1 text-sm text-wi-ink-500">
-          Tap <span className="font-medium text-wi-black">Share</span>, then{' '}
-          <span className="font-medium text-wi-black">Add to Home Screen</span>.
+        <Share className="size-4 shrink-0 text-wi-on-dark-2" />
+        <p className="flex-1 text-sm text-wi-on-dark-2">
+          Tap <span className="font-medium text-wi-paper">Share</span>, then{' '}
+          <span className="font-medium text-wi-paper">Add to Home Screen</span>.
         </p>
         <Button
           type="button"
@@ -73,6 +76,7 @@ export function InstallCard() {
           size="icon-sm"
           aria-label="Dismiss install prompt"
           onClick={dismiss}
+          className="text-wi-on-dark-2 hover:bg-wi-on-dark-fill hover:text-wi-paper"
         >
           <X />
         </Button>

@@ -89,9 +89,18 @@ export function EnablePush() {
 
   if (state === 'checking' || state === 'unsupported' || state === 'blocked') return null;
 
+  // Rendered only on the black Today screen (see today/page.tsx). The
+  // `secondary` variant's black-on-transparent styling is invisible there,
+  // so both states override border/text to the on-dark tokens.
   if (state === 'on') {
     return (
-      <Button type="button" variant="secondary" size="sm" disabled className="w-full">
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        disabled
+        className="w-full border-wi-on-dark-3 text-wi-paper disabled:opacity-60"
+      >
         <BellRing />
         Reminders on
       </Button>
@@ -99,7 +108,13 @@ export function EnablePush() {
   }
 
   return (
-    <Button type="button" variant="secondary" size="sm" onClick={enable} className="w-full">
+    <Button
+      type="button"
+      variant="secondary"
+      size="sm"
+      onClick={enable}
+      className="w-full border-wi-on-dark-3 text-wi-paper hover:bg-wi-on-dark-fill hover:text-wi-paper"
+    >
       <Bell />
       Turn on reminders
     </Button>
