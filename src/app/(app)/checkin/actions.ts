@@ -100,5 +100,5 @@ export async function saveCheckinAction(formData: FormData): Promise<void> {
   };
   await saveCheckin(prodDb, member, input, new Date(), getCohortStartDate());
   revalidatePath('/today');
-  redirect('/today');
+  redirect('/today?saved=checkin');
 }

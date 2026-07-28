@@ -224,3 +224,23 @@
     color: var(--wi-paper);
   }
 }
+
+/* ---- Save-confirmation toast (Toast.tsx): fade + 10px upward slide.
+   Gated entirely behind the media query so reduced-motion users land
+   straight on the end state (opacity 1, no offset) with no animation. ---- */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes wiToastIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-wi-toast-in {
+    animation: wiToastIn 200ms var(--wi-ease-out);
+  }
+}

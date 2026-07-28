@@ -85,5 +85,5 @@ export async function saveSessionAction(formData: FormData): Promise<void> {
   };
   await saveSession(prodDb, member, input, new Date(), getCohortStartDate());
   revalidatePath('/today');
-  redirect('/today');
+  redirect('/today?saved=session');
 }
