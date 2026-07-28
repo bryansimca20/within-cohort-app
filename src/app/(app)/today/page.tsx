@@ -117,6 +117,7 @@ function PhaseSummary({ status, startDate }: { status: TodayStatus; startDate: s
   );
 }
 
+/** Full-black Today home screen: phase-day progress, baseline/within ledgers, check-in status, and the check-in/session actions. */
 export default async function TodayPage() {
   const member = await requireMember();
   const startDate = getCohortStartDate();
