@@ -22,6 +22,8 @@ export type TodayStatus = {
   sessionCount: number;
   streak: number;
   phaseComplete: boolean;
+  baselineLogged: number;
+  withinLogged: number;
 };
 
 // Pure, testable core: given a db handle, the member, the "now" instant, and
@@ -51,6 +53,17 @@ export async function getTodayStatus(db: AnyPgDatabase, member: Member, now: Dat
 
   const streak = computeStreak(checkinDates, localDate);
 
+  // Distinct check-in dates split by the phase each one falls in, so the
+  // Today ledgers and History completion % can show baseline vs. within
+  // progress without a second query.
+  let baselineLogged = 0;
+  let withinLogged = 0;
+  for (const d of new Set(checkinDates)) {
+    const s = getPhase(startDate, d).state;
+    if (s === 'baseline') baselineLogged++;
+    else if (s === 'within') withinLogged++;
+  }
+
   return {
     phaseState,
     dayIndex,
@@ -59,5 +72,7 @@ export async function getTodayStatus(db: AnyPgDatabase, member: Member, now: Dat
     sessionCount,
     streak,
     phaseComplete: phaseState === 'complete',
+    baselineLogged,
+    withinLogged,
   };
 }

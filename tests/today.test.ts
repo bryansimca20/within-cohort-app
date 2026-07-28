@@ -79,3 +79,29 @@ test('a start date in the future puts the member in the pre phase', async () => 
   expect(status.dayIndex).toBeLessThan(0);
   expect(status.phaseComplete).toBe(false);
 });
+
+test('baselineLogged and withinLogged count distinct checkin dates per phase', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+
+  await db.insert(dailyCheckins).values([
+    { memberId: m.id, localDate: '2026-08-01', phase: 'baseline', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-05', phase: 'baseline', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-10', phase: 'baseline', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-15', phase: 'within', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-20', phase: 'within', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+  ]);
+
+  const status = await getTodayStatus(db, m, NOW, START);
+  expect(status.baselineLogged).toBe(3);
+  expect(status.withinLogged).toBe(2);
+});
+
+test('baselineLogged and withinLogged are zero with no checkins', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+
+  const status = await getTodayStatus(db, m, NOW, START);
+  expect(status.baselineLogged).toBe(0);
+  expect(status.withinLogged).toBe(0);
+});
