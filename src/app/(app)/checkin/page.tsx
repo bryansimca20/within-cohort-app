@@ -7,7 +7,7 @@ import { localDateFor } from '@/lib/dates';
 import { COHORT_TIMEZONE, getCohortStartDate } from '@/lib/cohort';
 import { NumberField } from '@/components/NumberField';
 import { HooperPicker } from '@/components/HooperPicker';
-import { ScreenHeader } from '@/components/ScreenHeader';
+import { ClosedNotice } from '@/components/ClosedNotice';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,13 +40,14 @@ export default async function CheckinPage({
 
   if (state === 'pre' || state === 'complete') {
     return (
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center px-[22px] py-20 text-center">
-        <p className="text-sm text-wi-ink-500">
-          {state === 'pre'
-            ? 'Check-ins open once your cohort starts.'
-            : 'Protocol complete. Check-ins are closed.'}
-        </p>
-      </div>
+      <ClosedNotice
+        title="Morning check-in"
+        message={
+          state === 'pre'
+            ? 'Check-ins open on day one of the protocol. Nothing to log yet.'
+            : 'The protocol is complete. Check-ins are closed and your entries are locked.'
+        }
+      />
     );
   }
 
@@ -59,17 +60,18 @@ export default async function CheckinPage({
     .limit(1);
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col">
-      <ScreenHeader
-        title="Morning check-in"
-        backHref="/today"
-        right={<span className="text-2xs font-bold uppercase tracking-[0.1em] text-wi-on-dark-3">~20s</span>}
-        sub={`${formatDateLabel(localDate)} · ${checkinPhaseLabel(state)}`}
-      />
+    <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-28" data-surface="dark">
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-h2 font-bold tracking-[-0.02em] uppercase">Morning check-in</h1>
+        <span className="text-2xs font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">~20s</span>
+      </div>
+      <p className="mt-1 text-xs text-wi-on-dark-2">
+        {formatDateLabel(localDate)} · {checkinPhaseLabel(state)}
+      </p>
 
-      <div className="flex flex-col gap-6 px-[22px] pt-[22px] pb-8">
+      <div className="mt-6 flex flex-col gap-6">
         {error && (
-          <p role="alert" className="text-sm text-wi-black">
+          <p role="alert" className="text-sm text-wi-paper">
             Please fill in every field before saving.
           </p>
         )}
@@ -89,7 +91,7 @@ export default async function CheckinPage({
               <div className="flex-1">
                 <NumberField
                   name="restingHr"
-                  label="Resting heart rate (bpm)"
+                  label="Resting HR (bpm)"
                   min={25}
                   max={120}
                   step={1}
@@ -99,7 +101,7 @@ export default async function CheckinPage({
               <div className="flex-1">
                 <NumberField
                   name="sleepHours"
-                  label="Sleep (hours)"
+                  label="Sleep (hrs)"
                   min={0}
                   max={16}
                   step={0.1}
@@ -112,27 +114,31 @@ export default async function CheckinPage({
           <div className="flex flex-col gap-4">
             <div className="flex items-baseline justify-between">
               <Label>How you feel</Label>
-              <span className="text-2xs text-wi-ink-300">1 low · 5 high</span>
+              <span className="text-2xs text-wi-on-dark-3">1 low · 5 high</span>
             </div>
             <HooperPicker
+              onDark
               name="hooperSleep"
               label="Sleep quality"
               anchor="poor → great"
               defaultValue={existing?.hooperSleep ?? 3}
             />
             <HooperPicker
+              onDark
               name="hooperFatigue"
               label="Fatigue"
               anchor="fresh → wrecked"
               defaultValue={existing?.hooperFatigue ?? 3}
             />
             <HooperPicker
+              onDark
               name="hooperSoreness"
               label="Soreness"
               anchor="none → severe"
               defaultValue={existing?.hooperSoreness ?? 3}
             />
             <HooperPicker
+              onDark
               name="hooperStress"
               label="Stress"
               anchor="calm → tense"
@@ -151,7 +157,12 @@ export default async function CheckinPage({
             />
           </div>
 
-          <Button type="submit" size="lg" className="h-auto w-full py-5 text-base normal-case tracking-normal">
+          <Button
+            type="submit"
+            variant="inverse"
+            size="lg"
+            className="h-auto w-full py-5 text-base normal-case tracking-normal"
+          >
             {existing ? 'Update check-in' : 'Save check-in'}
           </Button>
         </form>

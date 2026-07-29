@@ -9,12 +9,14 @@ type HooperPickerProps = {
   label: string;
   anchor?: string;
   defaultValue?: number;
+  /** Tune the pills + anchor for a dark surface (selected inverts to white, unselected sits on an on-dark fill). */
+  onDark?: boolean;
 };
 
 const VALUES = [1, 2, 3, 4, 5] as const;
 
 /** A Hooper-index 1-5 tap-pill row; a hidden input mirrors the selected value so the field submits under `name` in FormData. */
-export function HooperPicker({ name, label, anchor, defaultValue = 3 }: HooperPickerProps) {
+export function HooperPicker({ name, label, anchor, defaultValue = 3, onDark = false }: HooperPickerProps) {
   const id = useId();
   const [value, setValue] = useState(defaultValue);
 
@@ -24,7 +26,9 @@ export function HooperPicker({ name, label, anchor, defaultValue = 3 }: HooperPi
         <span id={id} className="text-sm font-semibold">
           {label}
         </span>
-        {anchor ? <span className="text-2xs text-wi-ink-500">{anchor}</span> : null}
+        {anchor ? (
+          <span className={cn('text-2xs', onDark ? 'text-wi-on-dark-3' : 'text-wi-ink-500')}>{anchor}</span>
+        ) : null}
       </div>
       <div role="group" aria-labelledby={id} className="flex gap-2">
         {VALUES.map((n) => {
@@ -37,9 +41,13 @@ export function HooperPicker({ name, label, anchor, defaultValue = 3 }: HooperPi
               aria-pressed={selected}
               className={cn(
                 'h-[52px] flex-1 rounded-[8px] border text-[17px] font-bold transition duration-[120ms]',
-                selected
-                  ? 'bg-wi-black text-wi-paper border-wi-black'
-                  : 'bg-wi-paper text-wi-ink-500 border-wi-line'
+                onDark
+                  ? selected
+                    ? 'bg-wi-paper text-wi-black border-wi-paper'
+                    : 'bg-wi-on-dark-fill text-wi-on-dark-2 border-wi-on-dark-line'
+                  : selected
+                    ? 'bg-wi-black text-wi-paper border-wi-black'
+                    : 'bg-wi-paper text-wi-ink-500 border-wi-line'
               )}
             >
               {n}

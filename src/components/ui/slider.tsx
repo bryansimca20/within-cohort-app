@@ -2,13 +2,16 @@ import { Slider as SliderPrimitive } from '@base-ui/react/slider';
 
 import { cn } from '@/lib/utils';
 
-/** WITHIN-restyled slider: mist track, solid black fill and thumb. */
+/** WITHIN-restyled slider, tuned for the dark capture forms (its only use): an on-dark track, a white
+ *  indicator + thumb. The track height is set explicitly (`h-1.5`) rather than via a `data-horizontal:`
+ *  variant, because Base UI does not emit a bare `data-horizontal` attribute — the variant never matched,
+ *  which collapsed the track to zero height and left only the thumb visible. */
 function Slider({ className, defaultValue, value, min = 0, max = 100, ...props }: SliderPrimitive.Root.Props) {
   const _values = Array.isArray(value) ? value : Array.isArray(defaultValue) ? defaultValue : [min, max];
 
   return (
     <SliderPrimitive.Root
-      className={cn('data-horizontal:w-full data-vertical:h-full', className)}
+      className={cn('w-full', className)}
       data-slot="slider"
       defaultValue={defaultValue}
       value={value}
@@ -17,21 +20,18 @@ function Slider({ className, defaultValue, value, min = 0, max = 100, ...props }
       thumbAlignment="edge"
       {...props}
     >
-      <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-40 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
+      <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-40">
         <SliderPrimitive.Track
           data-slot="slider-track"
-          className="relative grow overflow-hidden rounded-full bg-wi-mist select-none data-horizontal:h-1.5 data-horizontal:w-full data-vertical:h-full data-vertical:w-1.5"
+          className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-wi-on-dark-line select-none"
         >
-          <SliderPrimitive.Indicator
-            data-slot="slider-range"
-            className="bg-wi-black select-none data-horizontal:h-full data-vertical:w-full"
-          />
+          <SliderPrimitive.Indicator data-slot="slider-range" className="h-full bg-wi-paper select-none" />
         </SliderPrimitive.Track>
         {Array.from({ length: _values.length }, (_, index) => (
           <SliderPrimitive.Thumb
             data-slot="slider-thumb"
             key={index}
-            className="relative block size-5 shrink-0 rounded-full border-[1.5px] border-wi-black bg-wi-paper shadow-[var(--wi-shadow-sm)] transition-[box-shadow] select-none after:absolute after:-inset-2 focus-visible:ring-[3px] focus-visible:ring-black/15 focus-visible:outline-hidden active:ring-[3px] active:ring-black/15 disabled:pointer-events-none disabled:opacity-40"
+            className="relative block size-5 shrink-0 rounded-full border-[1.5px] border-wi-paper bg-wi-paper shadow-[var(--wi-shadow-sm)] transition-[box-shadow] select-none after:absolute after:-inset-2 focus-visible:ring-[3px] focus-visible:ring-white/25 focus-visible:outline-hidden active:ring-[3px] active:ring-white/25 disabled:pointer-events-none disabled:opacity-40"
           />
         ))}
       </SliderPrimitive.Control>

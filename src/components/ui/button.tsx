@@ -15,6 +15,7 @@ const buttonVariants = cva(
           'border-[1.5px] border-wi-black bg-transparent text-wi-black hover:bg-wi-black hover:text-wi-paper',
         ghost: 'border-transparent bg-transparent text-wi-black hover:bg-wi-mist',
         destructive: 'border-wi-charcoal bg-wi-charcoal text-wi-paper hover:opacity-[0.86]',
+        inverse: 'border-wi-paper bg-wi-paper text-wi-black hover:opacity-[0.86]',
         link: 'border-transparent bg-transparent font-medium normal-case tracking-normal text-wi-black underline-offset-4 hover:underline',
       },
       size: {

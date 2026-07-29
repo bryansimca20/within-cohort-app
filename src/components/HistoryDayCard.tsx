@@ -17,7 +17,7 @@ function splitLocalDate(dateISO: string): { dayNum: string; weekday: string } {
   };
 }
 
-/** One expandable History row: collapsed shows the date, phase tag, and session count; expanded reveals check-in, Hooper, and per-session detail, plus an edit link when it's today's entry. */
+/** One expandable History row, styled for the black History screen: collapsed shows the date, phase tag, and session count; expanded reveals check-in, Hooper, and per-session detail, plus an edit link when it's today's entry. */
 export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const { dayNum, weekday } = splitLocalDate(day.localDate);
@@ -28,7 +28,7 @@ export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boole
       : 'Check-in only · no session';
 
   return (
-    <div className="rounded-lg border border-wi-line bg-wi-paper">
+    <div className="rounded-lg border border-wi-on-dark-line">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -36,48 +36,48 @@ export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boole
         className="flex w-full items-center gap-3 p-[14px] text-left"
       >
         <div className="w-[42px] shrink-0 text-center">
-          <div className="text-lg leading-none font-bold text-wi-black">{dayNum}</div>
-          <div className="mt-0.5 text-[10px] font-bold tracking-[0.06em] text-wi-ink-300 uppercase">{weekday}</div>
+          <div className="text-lg leading-none font-bold text-wi-paper">{dayNum}</div>
+          <div className="mt-0.5 text-[10px] font-bold tracking-[0.06em] text-wi-on-dark-3 uppercase">{weekday}</div>
         </div>
         <div className="min-w-0 flex-1">
           <span
             className={cn(
               'inline-flex h-[18px] items-center rounded-[4px] px-[7px] text-[10px] font-bold tracking-[0.1em] uppercase leading-none',
-              isWithin ? 'bg-wi-black text-wi-paper' : 'bg-wi-mist text-wi-black'
+              isWithin ? 'bg-wi-paper text-wi-black' : 'bg-wi-on-dark-fill text-wi-on-dark-2'
             )}
           >
             {isWithin ? 'Within' : 'Baseline'}
           </span>
-          <p className="mt-[5px] text-xs text-wi-black">{sessionSummary}</p>
+          <p className="mt-[5px] text-xs text-wi-on-dark-2">{sessionSummary}</p>
         </div>
         <ChevronRight
-          className={cn('size-4 shrink-0 text-wi-ink-300 transition-transform', expanded && 'rotate-90')}
+          className={cn('size-4 shrink-0 text-wi-on-dark-3 transition-transform', expanded && 'rotate-90')}
         />
       </button>
 
       {expanded && (
-        <div className="flex flex-col gap-3 border-t border-wi-line px-[14px] pt-3 pb-[14px] pl-[69px]">
+        <div className="flex flex-col gap-3 border-t border-wi-on-dark-line px-[14px] pt-3 pb-[14px] pl-[69px]">
           <div>
-            <p className="text-[11px] font-bold tracking-[0.1em] text-wi-ink-300 uppercase">Check-in</p>
+            <p className="text-[11px] font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">Check-in</p>
             {day.checkin ? (
               <>
-                <p className="mt-1 text-[13px] text-wi-black">
+                <p className="mt-1 text-[13px] text-wi-on-dark-1">
                   Recovery {day.checkin.recovery} · RHR {day.checkin.restingHr} · Sleep {day.checkin.sleepHours}h
                 </p>
-                <p className="mt-0.5 text-[13px] text-wi-black">
+                <p className="mt-0.5 text-[13px] text-wi-on-dark-1">
                   Hooper: Sleep {day.checkin.hooperSleep}, Fatigue {day.checkin.hooperFatigue}, Soreness{' '}
                   {day.checkin.hooperSoreness}, Stress {day.checkin.hooperStress}
                 </p>
               </>
             ) : (
-              <p className="mt-1 text-[13px] text-wi-ink-300">No check-in</p>
+              <p className="mt-1 text-[13px] text-wi-on-dark-3">No check-in</p>
             )}
           </div>
 
           {day.sessions.map((s) => (
             <div key={s.id}>
-              <p className="text-[11px] font-bold tracking-[0.1em] text-wi-ink-300 uppercase">Session</p>
-              <p className="mt-1 text-[13px] text-wi-black">
+              <p className="text-[11px] font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">Session</p>
+              <p className="mt-1 text-[13px] text-wi-on-dark-1">
                 {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {s.distanceKm} km
                 {s.tookServing ? ' · serving taken' : ''}
               </p>
@@ -87,7 +87,7 @@ export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boole
           {isToday && (
             <Link
               href="/checkin"
-              className="inline-flex items-center gap-1.5 self-start text-[11px] font-bold tracking-[0.06em] text-wi-black uppercase"
+              className="inline-flex items-center gap-1.5 self-start text-[11px] font-bold tracking-[0.06em] text-wi-paper uppercase"
             >
               <Pencil className="size-3" />
               Editable today

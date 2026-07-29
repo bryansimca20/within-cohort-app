@@ -110,7 +110,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
     return (
       <div className="flex min-h-dvh flex-col bg-wi-black pt-16.5 pb-7.5 text-wi-paper">
         <div className="px-6.5">
-          <WithinLogo kind="logotype" color="white" height={14} />
+          <WithinLogo kind="logotype" color="white" height={20} />
           <div className="mt-11.5">
             <p className="text-2xs font-bold tracking-[0.14em] text-wi-on-dark-2 uppercase">COHORT LOG</p>
             <h1 className="mt-3 text-[38px] leading-[0.94] font-bold tracking-[-0.03em] uppercase">
