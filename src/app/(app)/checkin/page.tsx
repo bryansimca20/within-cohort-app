@@ -36,7 +36,7 @@ export default async function CheckinPage({
   const { error } = await searchParams;
   const member = await requireMember();
   const localDate = localDateFor(COHORT_TIMEZONE, new Date());
-  const state = getPhase(getCohortStartDate(), localDate).state;
+  const state = getPhase(await getCohortStartDate(db), localDate).state;
 
   if (state === 'pre' || state === 'complete') {
     return (

@@ -44,7 +44,7 @@ Package manager is **pnpm** (`pnpm-lock.yaml` is source of truth; pinned via the
 | Key | Purpose |
 | --- | --- |
 | `DATABASE_URL` | Serverless Postgres (Neon / Vercel Postgres) connection string |
-| `COHORT_START_DATE` | Cohort-wide day 0 of the phase calendar, `YYYY-MM-DD` (Jakarta). Same for everyone, so it lives here, not in a column |
+| `COHORT_START_DATE` | Bootstrap fallback for day 0 of the phase calendar, `YYYY-MM-DD` (Jakarta). The live value is set by a founder in Admin and stored in the `cohort_config` singleton row; this env is only the fallback when that row is empty |
 | `SESSION_SECRET` | iron-session cookie signing secret, **32+ chars** |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Web Push (generate with `pnpm dlx web-push generate-vapid-keys`) |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Same value as `VAPID_PUBLIC_KEY`, deliberately client-exposed for `pushManager.subscribe()` |
@@ -271,7 +271,8 @@ otherwise identical.
   v1. If a task drifts toward computing insight from the logs, stop — that is phase 2.
 - **Phase stamping is immutable.** Each check-in / session stores the `phase`
   (`baseline` | `within`) computed at write time from the cohort-wide start date
-  (`COHORT_START_DATE` env, read via `getCohortStartDate()`). Windows: day 0-13 baseline,
+  (the `cohort_config` singleton row, founder-set in Admin, falling back to the
+  `COHORT_START_DATE` env; read via `await getCohortStartDate(db)`). Windows: day 0-13 baseline,
   14-27 within (each phase is 14 days), `<0` blocked (pre-start), `>=28` read-only (complete). Never recompute a
   stored row's phase for display — read the stamped value. Pure cores take the start date
   as an explicit `startDate` param; only the `"use server"` wrapper / page reads the env.

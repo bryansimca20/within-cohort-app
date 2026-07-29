@@ -127,7 +127,7 @@ function ClosedScreen({
 /** Full-black Today home screen: the greeting, phase-day progress, baseline/within ledgers, check-in status, and the check-in/session actions. */
 export default async function TodayPage() {
   const member = await requireMember();
-  const startDate = getCohortStartDate();
+  const startDate = await getCohortStartDate(db);
   const status = await getTodayStatus(db, member, new Date(), startDate);
   const name = member.name;
 

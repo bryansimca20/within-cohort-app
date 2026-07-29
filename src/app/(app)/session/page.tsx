@@ -1,3 +1,4 @@
+import { db } from '@/db/client';
 import { requireMember } from '@/lib/session';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
@@ -21,7 +22,7 @@ export default async function SessionPage({
   const { error } = await searchParams;
   await requireMember();
   const localDate = localDateFor(COHORT_TIMEZONE, new Date());
-  const state = getPhase(getCohortStartDate(), localDate).state;
+  const state = getPhase(await getCohortStartDate(db), localDate).state;
 
   if (state === 'pre' || state === 'complete') {
     return (

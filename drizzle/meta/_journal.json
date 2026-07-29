@@ -15,6 +15,13 @@
       "when": 1785213107558,
       "tag": "0001_romantic_nebula",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785311645553,
+      "tag": "0002_young_secret_warriors",
+      "breakpoints": true
     }
   ]
 }

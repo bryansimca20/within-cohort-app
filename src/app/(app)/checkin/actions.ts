@@ -98,7 +98,7 @@ export async function saveCheckinAction(formData: FormData): Promise<void> {
     hooperStress: hooperStressRaw,
     note: formData.get('note') ?? undefined,
   };
-  await saveCheckin(prodDb, member, input, new Date(), getCohortStartDate());
+  await saveCheckin(prodDb, member, input, new Date(), await getCohortStartDate(prodDb));
   revalidatePath('/today');
   redirect('/today?saved=checkin');
 }

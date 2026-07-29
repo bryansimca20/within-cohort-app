@@ -1,10 +1,14 @@
 import Link from 'next/link';
 import { db } from '@/db/client';
 import { requireAdmin } from '@/lib/session';
-import { getCohortStartDate } from '@/lib/cohort';
+import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { buildDashboard, type DashboardRow } from '@/lib/dashboard';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { updateCohortStartAction } from './actions';
 
 function phaseLabel(row: DashboardRow): string {
   if (row.phaseState === 'pre') return 'Not started';
@@ -13,19 +17,70 @@ function phaseLabel(row: DashboardRow): string {
   return 'Complete';
 }
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ startSaved?: string; startError?: string }>;
+}) {
   await requireAdmin();
-  const rows = await buildDashboard(db, new Date(), getCohortStartDate());
+  const { startSaved, startError } = await searchParams;
+  const startDate = await getCohortStartDateOrNull(db);
 
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-wi-black">Cohort</h1>
+      </div>
+
+      <Card>
+        <CardContent className="flex flex-col gap-3">
+          <div>
+            <p className="text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">Cohort start date</p>
+            <p className="mt-1 text-sm text-wi-ink-500">
+              Day 0 of the phase calendar, shared by every runner. Baseline is the first 14 days, Within the next 14.
+            </p>
+          </div>
+          <form action={updateCohortStartAction} className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="startDate">Start date</Label>
+              <Input
+                id="startDate"
+                name="startDate"
+                type="date"
+                defaultValue={startDate ?? ''}
+                required
+                className="w-auto"
+              />
+            </div>
+            <Button type="submit">Save start date</Button>
+          </form>
+          {startSaved && <p className="text-sm font-medium text-wi-black">Start date saved.</p>}
+          {startError && <p role="alert" className="text-sm text-wi-black">Enter a valid date.</p>}
+          {!startDate && (
+            <p className="text-sm text-wi-ink-500">
+              Not set yet. Set the start date to open the cohort and start the phase calendar.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {startDate ? <Dashboard startDate={startDate} /> : null}
+    </div>
+  );
+}
+
+/** The founder dashboard proper: today's completion + per-member rows. Only rendered once a start date exists (buildDashboard needs it to compute each member's phase). */
+async function Dashboard({ startDate }: { startDate: string }) {
+  const rows = await buildDashboard(db, new Date(), startDate);
   const total = rows.length;
   const checkedIn = rows.filter((r) => r.checkedInToday).length;
   const completionPct = total === 0 ? 0 : Math.round((checkedIn / total) * 100);
   const missing = rows.filter((r) => !r.checkedInToday);
 
   return (
-    <div className="flex flex-col gap-6">
+    <>
       <div>
-        <h1 className="text-2xl font-semibold text-wi-black">Today</h1>
+        <h2 className="text-lg font-semibold text-wi-black">Today</h2>
         <p className="mt-1 text-sm text-wi-ink-500">
           {checkedIn} / {total} checked in ({completionPct}%)
         </p>
@@ -72,6 +127,6 @@ export default async function AdminDashboardPage() {
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }

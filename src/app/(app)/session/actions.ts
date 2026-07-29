@@ -83,7 +83,7 @@ export async function saveSessionAction(formData: FormData): Promise<void> {
     tookServing: tookServingRaw === null ? undefined : tookServingRaw === 'true' || tookServingRaw === 'on',
     note: formData.get('note') ?? undefined,
   };
-  await saveSession(prodDb, member, input, new Date(), getCohortStartDate());
+  await saveSession(prodDb, member, input, new Date(), await getCohortStartDate(prodDb));
   revalidatePath('/today');
   redirect('/today?saved=session');
 }

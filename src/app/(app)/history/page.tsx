@@ -15,7 +15,7 @@ import { EnablePush } from '@/components/EnablePush';
 /** Runner-facing History (black screen): streak + active-phase completion stat cards over a reverse-chronological list of expandable day cards. */
 export default async function HistoryPage() {
   const member = await requireMember();
-  const startDate = getCohortStartDate();
+  const startDate = await getCohortStartDate(db);
   const status = await getTodayStatus(db, member, new Date(), startDate);
 
   const checkins = await db

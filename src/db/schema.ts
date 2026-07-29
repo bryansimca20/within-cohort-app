@@ -3,6 +3,16 @@ import { pgTable, uuid, text, boolean, integer, numeric, timestamp, pgEnum, uniq
 export const phaseEnum = pgEnum('phase', ['baseline', 'within']);
 export const sessionTypeEnum = pgEnum('session_type', ['easy','long','tempo','interval','recovery','race','other']);
 
+// Cohort-wide config, one row (id is pinned to 1). Holds the single start date
+// the whole phase calendar is computed from, set by a founder in the admin area.
+// Nullable start_date means "not set yet"; readers fall back to the
+// COHORT_START_DATE env var as a bootstrap default.
+export const cohortConfig = pgTable('cohort_config', {
+  id: integer('id').primaryKey().default(1),
+  startDate: date('start_date'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const members = pgTable('members', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),

@@ -19,7 +19,7 @@ export async function GET(request: Request): Promise<Response> {
     return new Response(null, { status: 401 });
   }
 
-  const due = await membersNeedingReminder(prodDb, new Date(), getCohortStartDate());
+  const due = await membersNeedingReminder(prodDb, new Date(), await getCohortStartDate(prodDb));
 
   let sent = 0;
   for (const member of due) {
