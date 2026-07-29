@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 function phaseLabel(row: DashboardRow): string {
   if (row.phaseState === 'pre') return 'Not started';
   if (row.phaseState === 'baseline') return `Baseline · Day ${row.dayIndex + 1} / 14`;
-  if (row.phaseState === 'within') return `On Within · Day ${row.dayIndex - 13} / 28`;
+  if (row.phaseState === 'within') return `On Within · Day ${row.dayIndex - 13} / 14`;
   return 'Complete';
 }
 

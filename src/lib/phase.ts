@@ -7,7 +7,7 @@ export function getPhase(startDate: string, localDate: string): { state: PhaseSt
   let state: PhaseState;
   if (dayIndex < 0) state = 'pre';
   else if (dayIndex <= 13) state = 'baseline';
-  else if (dayIndex <= 41) state = 'within';
+  else if (dayIndex <= 27) state = 'within';
   else state = 'complete';
   return { state, dayIndex };
 }

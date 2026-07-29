@@ -272,7 +272,7 @@ otherwise identical.
 - **Phase stamping is immutable.** Each check-in / session stores the `phase`
   (`baseline` | `within`) computed at write time from the cohort-wide start date
   (`COHORT_START_DATE` env, read via `getCohortStartDate()`). Windows: day 0-13 baseline,
-  14-41 within, `<0` blocked (pre-start), `>=42` read-only (complete). Never recompute a
+  14-27 within (each phase is 14 days), `<0` blocked (pre-start), `>=28` read-only (complete). Never recompute a
   stored row's phase for display — read the stamped value. Pure cores take the start date
   as an explicit `startDate` param; only the `"use server"` wrapper / page reads the env.
 - **Timezone.** The whole cohort is on Jakarta time. All "today" uses the
