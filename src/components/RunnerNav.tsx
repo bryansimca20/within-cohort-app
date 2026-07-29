@@ -28,7 +28,7 @@ export function RunnerNav() {
               href={href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex flex-1 flex-col items-center gap-1 py-2 text-2xs font-bold uppercase tracking-[0.06em]',
+                'flex flex-1 flex-col items-center gap-1 py-2 text-2xs font-bold uppercase tracking-[0.06em] transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.94]',
                 active ? 'text-wi-paper' : 'text-wi-on-dark-3'
               )}
             >

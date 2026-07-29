@@ -244,3 +244,37 @@
     animation: wiToastIn 200ms var(--wi-ease-out);
   }
 }
+
+/* ---- History day-card expand (HistoryDayCard.tsx): a subtle fade + 4px
+   settle when a row opens. Occasional, so it can afford the base duration.
+   Transform + opacity only, so it stays on the GPU. ---- */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes wiExpand {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-wi-expand {
+    animation: wiExpand var(--wi-duration-base) var(--wi-ease-out);
+  }
+}
+
+/* ---- Reduced motion: strip movement and animation app-wide. This is a 7am
+   one-handed capture tool, so the reduced-motion experience is simply the
+   instant one — no entrances, no press-scale, no toast slide. ---- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

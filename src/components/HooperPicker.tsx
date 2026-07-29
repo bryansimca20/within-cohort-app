@@ -40,7 +40,7 @@ export function HooperPicker({ name, label, anchor, defaultValue = 3, onDark = f
               onClick={() => setValue(n)}
               aria-pressed={selected}
               className={cn(
-                'h-[52px] flex-1 rounded-[8px] border text-[17px] font-bold transition duration-[120ms]',
+                'h-[52px] flex-1 rounded-[8px] border text-[17px] font-bold transition duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]',
                 onDark
                   ? selected
                     ? 'bg-wi-paper text-wi-black border-wi-paper'

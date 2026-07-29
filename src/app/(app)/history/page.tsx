@@ -76,7 +76,7 @@ export default async function HistoryPage() {
           <form action={logout}>
             <button
               type="submit"
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-[6px] border border-wi-on-dark-line text-2xs font-bold tracking-[0.1em] text-wi-on-dark-2 uppercase"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-[6px] border border-wi-on-dark-line text-2xs font-bold tracking-[0.1em] text-wi-on-dark-2 uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.98]"
             >
               <LogOut className="size-4" />
               Log out

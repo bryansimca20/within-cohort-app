@@ -127,7 +127,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
               key={member.id}
               type="button"
               onClick={() => pick(member)}
-              className="flex w-full shrink-0 items-center gap-3.25 rounded-lg border border-wi-on-dark-line bg-transparent px-3.5 py-3 text-left text-wi-paper hover:bg-wi-on-dark-fill"
+              className="flex w-full shrink-0 items-center gap-3.25 rounded-lg border border-wi-on-dark-line bg-transparent px-3.5 py-3 text-left text-wi-paper transition duration-[120ms] ease-[var(--wi-ease-standard)] hover:bg-wi-on-dark-fill active:scale-[0.98]"
             >
               <span className="flex size-8.5 shrink-0 items-center justify-center rounded-md bg-wi-on-dark-fill text-xs font-bold">
                 {initialsOf(member.name)}
@@ -194,7 +194,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
             key={digit}
             type="button"
             onClick={() => press(digit)}
-            className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black"
+            className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95]"
           >
             {digit}
           </button>
@@ -203,7 +203,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
         <button
           type="button"
           onClick={() => press('0')}
-          className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black"
+          className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95]"
         >
           0
         </button>
@@ -211,7 +211,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
           type="button"
           onClick={del}
           aria-label="Delete last digit"
-          className="flex h-14 items-center justify-center rounded-md border-none bg-transparent text-wi-black"
+          className="flex h-14 items-center justify-center rounded-md border-none bg-transparent text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95]"
         >
           <Delete className="size-6" />
         </button>

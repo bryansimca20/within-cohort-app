@@ -33,7 +33,7 @@ export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boole
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full items-center gap-3 p-[14px] text-left"
+        className="flex w-full items-center gap-3 p-[14px] text-left transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.99]"
       >
         <div className="w-[42px] shrink-0 text-center">
           <div className="text-lg leading-none font-bold text-wi-paper">{dayNum}</div>
@@ -56,7 +56,7 @@ export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boole
       </button>
 
       {expanded && (
-        <div className="flex flex-col gap-3 border-t border-wi-on-dark-line px-[14px] pt-3 pb-[14px] pl-[69px]">
+        <div className="flex flex-col gap-3 border-t border-wi-on-dark-line px-[14px] pt-3 pb-[14px] pl-[69px] animate-wi-expand">
           <div>
             <p className="text-[11px] font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">Check-in</p>
             {day.checkin ? (

@@ -152,7 +152,7 @@ export default async function TodayPage() {
         action={
           <Link
             href="/history"
-            className="inline-flex h-[46px] items-center rounded-[8px] bg-wi-paper px-6 text-[11px] font-bold tracking-[0.08em] text-wi-black uppercase"
+            className="inline-flex h-[46px] items-center rounded-[8px] bg-wi-paper px-6 text-[11px] font-bold tracking-[0.08em] text-wi-black uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]"
           >
             View history
           </Link>
@@ -233,7 +233,7 @@ export default async function TodayPage() {
         <Link
           href="/checkin"
           className={cn(
-            'flex h-[74px] flex-col items-center justify-center gap-2 rounded-[8px] text-center text-[11px] font-bold tracking-[0.05em] uppercase',
+            'flex h-[74px] flex-col items-center justify-center gap-2 rounded-[8px] text-center text-[11px] font-bold tracking-[0.05em] uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]',
             status.checkinDone ? 'border-[1.5px] border-wi-on-dark-3 text-wi-paper' : 'bg-wi-paper text-wi-black'
           )}
         >
@@ -242,7 +242,7 @@ export default async function TodayPage() {
         </Link>
         <Link
           href="/session"
-          className="flex h-[74px] flex-col items-center justify-center gap-2 rounded-[8px] border-[1.5px] border-wi-on-dark-3 text-center text-[11px] font-bold tracking-[0.05em] text-wi-paper uppercase"
+          className="flex h-[74px] flex-col items-center justify-center gap-2 rounded-[8px] border-[1.5px] border-wi-on-dark-3 text-center text-[11px] font-bold tracking-[0.05em] text-wi-paper uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]"
         >
           <Activity className="size-5" />
           Log session
