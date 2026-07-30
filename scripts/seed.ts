@@ -2,8 +2,8 @@
 // EDIT THIS ROSTER: real names and in_cohort/is_admin flags before running
 // for real. The founder has not supplied the actual cohort roster yet, so
 // everything below is a placeholder that must NOT be run against a production
-// database as-is. The cohort start date is set once via the COHORT_START_DATE
-// env var, not per member.
+// database as-is. The cohort start date is not seeded here: a founder sets it
+// in Admin (the cohort_config row).
 // ============================================================================
 import 'dotenv/config';
 import { eq } from 'drizzle-orm';

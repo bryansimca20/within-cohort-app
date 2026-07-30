@@ -1,7 +1,7 @@
 // Cohort-wide config that is the same for every member. The timezone is a
-// constant; the start date is stored in the single `cohort_config` row so a
-// founder can set it from the admin area, with the COHORT_START_DATE env var
-// as a bootstrap fallback.
+// constant; the start date lives in the single `cohort_config` row and is set
+// by a founder in the admin area. There is no environment fallback: an unset
+// start date is a real "cohort not opened yet" state the UI handles.
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { cohortConfig } from '@/db/schema';
 import type * as schema from '@/db/schema';
@@ -17,22 +17,22 @@ export const COHORT_TIMEZONE = 'Asia/Jakarta';
 
 const START_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** The configured start date if one exists (admin-set value first, then the
- *  COHORT_START_DATE env fallback), or null if neither is set. Never throws —
- *  for the admin settings UI, which must render before a date is chosen. */
+/** The founder-set cohort start date, or null when it has not been set yet.
+ *  Never throws — pages call this and render a "not opened yet" state when it
+ *  is null instead of computing a phase from a missing date. */
 export async function getCohortStartDateOrNull(db: AnyPgDatabase): Promise<string | null> {
   const [row] = await db.select({ startDate: cohortConfig.startDate }).from(cohortConfig).limit(1);
-  const value = row?.startDate ?? process.env.COHORT_START_DATE ?? null;
+  const value = row?.startDate ?? null;
   return value && START_DATE_RE.test(value) ? value : null;
 }
 
-/** The single cohort start date. The phase calendar is meaningless without it,
- *  so a value set neither in the admin config nor the env is a hard
- *  configuration error rather than something to default around. */
+/** The cohort start date, asserting one is set. Use only where a valid date is
+ *  guaranteed (server actions reached from a page that already gated on it, the
+ *  reminder cron after its own null check); pages use getCohortStartDateOrNull. */
 export async function getCohortStartDate(db: AnyPgDatabase): Promise<string> {
   const value = await getCohortStartDateOrNull(db);
   if (!value) {
-    throw new Error('Cohort start date is not set. Set it in Admin (or via COHORT_START_DATE).');
+    throw new Error('Cohort start date is not set. A founder must set it in Admin.');
   }
   return value;
 }

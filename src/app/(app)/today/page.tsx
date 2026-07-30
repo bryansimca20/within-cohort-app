@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Activity, Check, Clock, Pencil, Sunrise, Zap } from 'lucide-react';
 import { db } from '@/db/client';
 import { requireMember } from '@/lib/session';
-import { getCohortStartDate } from '@/lib/cohort';
+import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { getTodayStatus, type TodayStatus } from '@/lib/today';
 import { cn } from '@/lib/utils';
 
@@ -127,9 +127,21 @@ function ClosedScreen({
 /** Full-black Today home screen: the greeting, phase-day progress, baseline/within ledgers, check-in status, and the check-in/session actions. */
 export default async function TodayPage() {
   const member = await requireMember();
-  const startDate = await getCohortStartDate(db);
-  const status = await getTodayStatus(db, member, new Date(), startDate);
   const name = member.name;
+  const startDate = await getCohortStartDateOrNull(db);
+
+  if (!startDate) {
+    return (
+      <ClosedScreen
+        name={name}
+        eyebrow="Cohort not open"
+        headline="Not scheduled yet"
+        body="Your founder hasn't set the cohort start date. Check back once it's scheduled."
+      />
+    );
+  }
+
+  const status = await getTodayStatus(db, member, new Date(), startDate);
 
   if (status.phaseState === 'pre') {
     return (

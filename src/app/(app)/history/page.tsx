@@ -3,11 +3,12 @@ import { desc, eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { dailyCheckins, sessionLogs } from '@/db/schema';
 import { requireMember } from '@/lib/session';
-import { getCohortStartDate } from '@/lib/cohort';
+import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { LogOut } from 'lucide-react';
 import { getTodayStatus } from '@/lib/today';
 import { groupByDate } from '@/lib/history';
 import { logout } from '@/app/login/actions';
+import { ClosedNotice } from '@/components/ClosedNotice';
 import { HistoryDayCard } from '@/components/HistoryDayCard';
 import { InstallCard } from '@/components/InstallCard';
 import { EnablePush } from '@/components/EnablePush';
@@ -15,7 +16,10 @@ import { EnablePush } from '@/components/EnablePush';
 /** Runner-facing History (black screen): streak + active-phase completion stat cards over a reverse-chronological list of expandable day cards. */
 export default async function HistoryPage() {
   const member = await requireMember();
-  const startDate = await getCohortStartDate(db);
+  const startDate = await getCohortStartDateOrNull(db);
+  if (!startDate) {
+    return <ClosedNotice title="History" message="Your history appears once the cohort starts." />;
+  }
   const status = await getTodayStatus(db, member, new Date(), startDate);
 
   const checkins = await db

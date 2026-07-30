@@ -2,7 +2,7 @@ import { db } from '@/db/client';
 import { requireMember } from '@/lib/session';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
-import { COHORT_TIMEZONE, getCohortStartDate } from '@/lib/cohort';
+import { COHORT_TIMEZONE, getCohortStartDateOrNull } from '@/lib/cohort';
 import { NumberField } from '@/components/NumberField';
 import { RpeSlider } from '@/components/RpeSlider';
 import { ClosedNotice } from '@/components/ClosedNotice';
@@ -22,7 +22,16 @@ export default async function SessionPage({
   const { error } = await searchParams;
   await requireMember();
   const localDate = localDateFor(COHORT_TIMEZONE, new Date());
-  const state = getPhase(await getCohortStartDate(db), localDate).state;
+  const startDate = await getCohortStartDateOrNull(db);
+  if (!startDate) {
+    return (
+      <ClosedNotice
+        title="Log a session"
+        message="Session logging opens once your founder sets the cohort start date."
+      />
+    );
+  }
+  const state = getPhase(startDate, localDate).state;
 
   if (state === 'pre' || state === 'complete') {
     return (
