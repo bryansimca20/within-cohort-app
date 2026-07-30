@@ -136,7 +136,7 @@ export default async function TodayPage() {
         name={name}
         eyebrow="Cohort not open"
         headline="Not scheduled yet"
-        body="Your founder hasn't set the cohort start date. Check back once it's scheduled."
+        body="The cohort start date isn't set yet. Check back once it's scheduled."
       />
     );
   }

@@ -27,7 +27,7 @@ export default async function SessionPage({
     return (
       <ClosedNotice
         title="Log a session"
-        message="Session logging opens once your founder sets the cohort start date."
+        message="Session logging opens once the cohort start date is set."
       />
     );
   }

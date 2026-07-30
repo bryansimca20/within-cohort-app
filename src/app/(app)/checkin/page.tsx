@@ -41,7 +41,7 @@ export default async function CheckinPage({
     return (
       <ClosedNotice
         title="Morning check-in"
-        message="Check-ins open once your founder sets the cohort start date."
+        message="Check-ins open once the cohort start date is set."
       />
     );
   }

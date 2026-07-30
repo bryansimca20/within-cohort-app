@@ -101,7 +101,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
 
   const errorMessage =
     error === 'wrong'
-      ? 'Wrong passcode. Ask the founder to resend.'
+      ? 'Wrong passcode. Try again.'
       : error === 'rate'
         ? 'Too many attempts. Wait a few minutes.'
         : '';
