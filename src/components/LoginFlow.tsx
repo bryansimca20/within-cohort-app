@@ -108,7 +108,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
 
   if (step === 'who') {
     return (
-      <div className="flex min-h-dvh flex-col bg-wi-black pt-16.5 pb-7.5 text-wi-paper">
+      <div className="flex min-h-dvh flex-1 flex-col bg-wi-black pt-16.5 pb-7.5 text-wi-paper md:min-h-0">
         <div className="px-6.5">
           <WithinLogo kind="logotype" color="white" height={20} />
           <div className="mt-11.5">
@@ -146,7 +146,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-wi-black">
+    <div className="flex min-h-dvh flex-1 flex-col bg-wi-black md:min-h-0">
       <div className="flex flex-1 flex-col px-6.5 pt-16.5 pb-6.5 text-wi-paper">
         <button
           type="button"

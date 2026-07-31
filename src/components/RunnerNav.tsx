@@ -18,7 +18,7 @@ export function RunnerNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 bg-wi-black border-t border-wi-on-dark-line pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed inset-x-0 bottom-0 z-10 bg-wi-black border-t border-wi-on-dark-line pb-[env(safe-area-inset-bottom)] md:absolute md:pb-0">
       <div className="mx-auto flex max-w-md">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;

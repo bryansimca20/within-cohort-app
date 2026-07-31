@@ -15,5 +15,14 @@ export default async function LoginPage() {
     .from(members)
     .orderBy(asc(members.name));
 
-  return <LoginFlow roster={roster} />;
+  // Same phone-frame treatment as the runner shell: full-bleed black on phones,
+  // a centered phone-width column on a light backdrop for web. LoginFlow fills
+  // this column (min-h-full flex-1) instead of the viewport.
+  return (
+    <div className="min-h-dvh bg-wi-black md:flex md:justify-center md:bg-wi-paper-dim md:py-8">
+      <div className="flex min-h-dvh w-full flex-col bg-wi-black md:h-[calc(100dvh-4rem)] md:min-h-0 md:max-w-md md:overflow-hidden md:rounded-lg md:border md:border-wi-line md:shadow-(--wi-shadow-lg)">
+        <LoginFlow roster={roster} />
+      </div>
+    </div>
+  );
 }
