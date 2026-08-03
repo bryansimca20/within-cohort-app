@@ -220,14 +220,20 @@ export default async function TodayPage() {
               {status.checkinDone ? 'Logged · editable today' : 'About 20 seconds'}
             </p>
           </div>
-          <span
-            className={cn(
-              'inline-flex h-[22px] items-center rounded-[5px] px-[9px] text-[10px] font-bold tracking-[0.1em] whitespace-nowrap uppercase',
-              status.checkinDone ? 'bg-wi-paper text-wi-black' : 'border border-wi-on-dark-3 text-wi-paper'
-            )}
-          >
-            {status.checkinDone ? 'Edit' : 'Not yet'}
-          </span>
+          {status.checkinDone ? (
+            <Link
+              href="/checkin"
+              aria-label="Edit today's check-in"
+              className="inline-flex h-[22px] items-center gap-1 rounded-[5px] bg-wi-paper px-[9px] text-[10px] font-bold tracking-[0.1em] whitespace-nowrap text-wi-black uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95]"
+            >
+              <Pencil className="size-3" />
+              Edit
+            </Link>
+          ) : (
+            <span className="inline-flex h-[22px] items-center rounded-[5px] border border-wi-on-dark-3 px-[9px] text-[10px] font-bold tracking-[0.1em] whitespace-nowrap text-wi-paper uppercase">
+              Not yet
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 py-3">
           <span className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-wi-on-dark-fill">
