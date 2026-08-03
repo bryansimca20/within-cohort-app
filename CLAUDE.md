@@ -280,8 +280,12 @@ otherwise identical.
   `COHORT_TIMEZONE` constant (`Asia/Jakarta`, in [src/lib/cohort.ts](src/lib/cohort.ts))
   via `localDateFor`. `localDate` is that calendar date. Never server-local time, never a
   per-member timezone.
-- **Edit policy.** Same-local-day entries are editable; older entries are read-only. No
-  backfill in v1 (a missed day is a visible gap, not an invented row).
+- **Edit policy.** Check-ins are same-local-day editable only. **Sessions** are
+  editable and deletable by their owner for the whole protocol window (they lock
+  when the protocol completes); a session's `localDate` and stamped `phase` never
+  change on edit, and `tookServing` follows the stored phase (baseline forces null).
+  Deletion is a hard delete. Still no backfill in v1 (a missed day is a visible
+  gap, not an invented row).
 - **Auth.** Login is member-name select + a **4-digit passcode** (`generatePasscode` emits
   1000-9999). Store only the bcrypt passcode hash. A freshly generated plaintext is shown
   once (seed console or an admin `useActionState` return) and never logged or put in a

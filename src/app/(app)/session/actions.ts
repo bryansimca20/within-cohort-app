@@ -1,5 +1,6 @@
 'use server';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { db as prodDb } from '@/db/client';
@@ -55,6 +56,67 @@ export async function saveSession(db: AnyPgDatabase, member: Member, input: unkn
   });
 }
 
+// Pure, testable core: correct an existing session's metrics in place. The
+// row's localDate and stamped phase are immutable (editing fixes data, it
+// never re-homes a row to another day/phase), so this writes only the metric
+// columns. tookServing follows the row's STORED phase, not today's: a baseline
+// session can never record a serving even when edited during the within phase.
+// Rejects a row not owned by `member` and any edit once the protocol is
+// complete; the ownership + window guards live here (not just the UI) because
+// the wrapper is reachable by direct POST.
+export async function updateSession(
+  db: AnyPgDatabase,
+  member: Member,
+  sessionId: string,
+  input: unknown,
+  now: Date,
+  startDate: string,
+): Promise<{ localDate: string }> {
+  const parsed = sessionSchema.parse(input);
+
+  const { state } = getPhase(startDate, localDateFor(COHORT_TIMEZONE, now));
+  if (state === 'pre') throw new Error('Cohort has not started yet');
+  if (state === 'complete') throw new Error('Protocol complete: sessions are closed');
+
+  const [row] = await db.select().from(sessionLogs).where(eq(sessionLogs.id, sessionId));
+  if (!row || row.memberId !== member.id) throw new Error('Session not found');
+
+  await db
+    .update(sessionLogs)
+    .set({
+      sessionType: parsed.sessionType,
+      sessionTypeOther: parsed.sessionTypeOther ?? null,
+      rpe: parsed.rpe,
+      durationMin: parsed.durationMin,
+      distanceKm: parsed.distanceKm.toString(),
+      tookServing: row.phase === 'baseline' ? null : (parsed.tookServing ?? null),
+      note: parsed.note ?? null,
+    })
+    .where(and(eq(sessionLogs.id, sessionId), eq(sessionLogs.memberId, member.id)));
+
+  return { localDate: row.localDate };
+}
+
+// Pure, testable core: hard-delete one of a member's own sessions. Same
+// ownership + window guards as updateSession. Used to remove a mis-logged or
+// double-logged session; there is no soft-delete or audit trail in v1.
+export async function deleteSession(
+  db: AnyPgDatabase,
+  member: Member,
+  sessionId: string,
+  now: Date,
+  startDate: string,
+): Promise<void> {
+  const { state } = getPhase(startDate, localDateFor(COHORT_TIMEZONE, now));
+  if (state === 'pre') throw new Error('Cohort has not started yet');
+  if (state === 'complete') throw new Error('Protocol complete: sessions are closed');
+
+  const [row] = await db.select().from(sessionLogs).where(eq(sessionLogs.id, sessionId));
+  if (!row || row.memberId !== member.id) throw new Error('Session not found');
+
+  await db.delete(sessionLogs).where(and(eq(sessionLogs.id, sessionId), eq(sessionLogs.memberId, member.id)));
+}
+
 export async function saveSessionAction(formData: FormData): Promise<void> {
   const member = await requireMember();
 
@@ -86,4 +148,48 @@ export async function saveSessionAction(formData: FormData): Promise<void> {
   await saveSession(prodDb, member, input, new Date(), await getCohortStartDate(prodDb));
   revalidatePath('/today');
   redirect('/today?saved=session');
+}
+
+/** Server-action wrapper: edit one of the caller's own sessions from the edit route, then revalidate and redirect back to where the edit began. */
+export async function updateSessionAction(sessionId: string, formData: FormData): Promise<void> {
+  const member = await requireMember();
+  const from = String(formData.get('from') ?? 'history');
+
+  const sessionTypeRaw = formData.get('sessionType');
+  const rpeRaw = formData.get('rpe');
+  const durationMinRaw = formData.get('durationMin');
+  const distanceKmRaw = formData.get('distanceKm');
+
+  // Same coercion guard as saveSessionAction: reject incomplete submissions
+  // before z.coerce turns missing fields into valid-looking zeros.
+  if (!sessionTypeRaw || !rpeRaw || !durationMinRaw || !distanceKmRaw) {
+    redirect(`/session/${sessionId}/edit?error=missing&from=${from}`);
+  }
+
+  const tookServingRaw = formData.get('tookServing');
+  const input = {
+    sessionType: sessionTypeRaw,
+    sessionTypeOther: formData.get('sessionTypeOther') ?? undefined,
+    rpe: rpeRaw,
+    durationMin: durationMinRaw,
+    distanceKm: distanceKmRaw,
+    tookServing: tookServingRaw === null ? undefined : tookServingRaw === 'true' || tookServingRaw === 'on',
+    note: formData.get('note') ?? undefined,
+  };
+
+  await updateSession(prodDb, member, sessionId, input, new Date(), await getCohortStartDate(prodDb));
+  revalidatePath('/today');
+  revalidatePath('/history');
+  revalidatePath('/session');
+
+  redirect(`${from === 'session' ? '/session' : '/history'}?saved=session`);
+}
+
+/** Server-action wrapper: hard-delete one of the caller's own sessions (invoked inline from the Session/History lists), then revalidate. */
+export async function deleteSessionAction(sessionId: string): Promise<void> {
+  const member = await requireMember();
+  await deleteSession(prodDb, member, sessionId, new Date(), await getCohortStartDate(prodDb));
+  revalidatePath('/today');
+  revalidatePath('/history');
+  revalidatePath('/session');
 }

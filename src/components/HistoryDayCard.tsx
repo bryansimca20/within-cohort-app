@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Pencil } from 'lucide-react';
 import { sessionTypeLabel, type DayGroup } from '@/lib/history';
 import { cn } from '@/lib/utils';
+import { SessionRowActions } from '@/components/SessionRowActions';
 
 // Day-number + weekday split for the collapsed row. 'YYYY-MM-DD' is a plain
 // calendar date with no time component, so parsing/formatting stays pinned
@@ -18,7 +19,7 @@ function splitLocalDate(dateISO: string): { dayNum: string; weekday: string } {
 }
 
 /** One expandable History row, styled for the black History screen: collapsed shows the date, phase tag, and session count; expanded reveals check-in, Hooper, and per-session detail, plus an edit link when it's today's entry. */
-export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boolean }) {
+export function HistoryDayCard({ day, isToday, editable }: { day: DayGroup; isToday: boolean; editable: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const { dayNum, weekday } = splitLocalDate(day.localDate);
   const isWithin = day.phase === 'within';
@@ -72,6 +73,15 @@ export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boole
             ) : (
               <p className="mt-1 text-[13px] text-wi-on-dark-3">No check-in</p>
             )}
+            {isToday && day.checkin && (
+              <Link
+                href="/checkin"
+                className="mt-1.5 inline-flex items-center gap-1 self-start text-[11px] font-bold tracking-[0.06em] text-wi-paper uppercase"
+              >
+                <Pencil className="size-3" />
+                Edit
+              </Link>
+            )}
           </div>
 
           {day.sessions.map((s) => (
@@ -81,18 +91,9 @@ export function HistoryDayCard({ day, isToday }: { day: DayGroup; isToday: boole
                 {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {s.distanceKm} km
                 {s.tookServing ? ' · serving taken' : ''}
               </p>
+              {editable && <SessionRowActions sessionId={s.id} from="history" />}
             </div>
           ))}
-
-          {isToday && (
-            <Link
-              href="/checkin"
-              className="inline-flex items-center gap-1.5 self-start text-[11px] font-bold tracking-[0.06em] text-wi-paper uppercase"
-            >
-              <Pencil className="size-3" />
-              Editable today
-            </Link>
-          )}
         </div>
       )}
     </div>

@@ -70,7 +70,12 @@ export default async function HistoryPage() {
         ) : (
           <div className="flex flex-col gap-[10px]">
             {days.map((day) => (
-              <HistoryDayCard key={day.localDate} day={day} isToday={day.localDate === status.localDate} />
+              <HistoryDayCard
+                key={day.localDate}
+                day={day}
+                isToday={day.localDate === status.localDate}
+                editable={status.phaseState !== 'complete'}
+              />
             ))}
           </div>
         )}
