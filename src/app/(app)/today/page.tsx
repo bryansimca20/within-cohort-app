@@ -214,7 +214,7 @@ export default async function TodayPage() {
           )}
           <div className="flex-1">
             <p className="text-sm font-semibold">
-              {status.checkinDone ? 'Today is logged' : 'Today is not logged yet'}
+              {status.checkinDone ? "You've logged in today" : 'Today is not logged yet'}
             </p>
             <p className="mt-0.5 text-xs text-wi-on-dark-3">
               {status.checkinDone ? 'Logged · editable today' : 'About 20 seconds'}
@@ -226,7 +226,7 @@ export default async function TodayPage() {
               status.checkinDone ? 'bg-wi-paper text-wi-black' : 'border border-wi-on-dark-3 text-wi-paper'
             )}
           >
-            {status.checkinDone ? 'Done' : 'Not yet'}
+            {status.checkinDone ? 'Edit' : 'Not yet'}
           </span>
         </div>
         <div className="flex items-center gap-3 py-3">
@@ -257,7 +257,7 @@ export default async function TodayPage() {
           className="flex h-[74px] flex-col items-center justify-center gap-2 rounded-[8px] border-[1.5px] border-wi-on-dark-3 text-center text-[11px] font-bold tracking-[0.05em] text-wi-paper uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]"
         >
           <Activity className="size-5" />
-          Log session
+          {status.sessionCount > 0 ? 'Log another session' : 'Log session'}
         </Link>
       </div>
     </Screen>
