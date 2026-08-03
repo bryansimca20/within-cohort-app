@@ -4,7 +4,7 @@ import { db } from '@/db/client';
 import { dailyCheckins, sessionLogs } from '@/db/schema';
 import { requireMember } from '@/lib/session';
 import { getCohortStartDateOrNull } from '@/lib/cohort';
-import { LogOut } from 'lucide-react';
+import { LayoutDashboard, LogOut } from 'lucide-react';
 import { getTodayStatus } from '@/lib/today';
 import { groupByDate } from '@/lib/history';
 import { logout } from '@/app/login/actions';
@@ -12,6 +12,7 @@ import { ClosedNotice } from '@/components/ClosedNotice';
 import { HistoryDayCard } from '@/components/HistoryDayCard';
 import { InstallCard } from '@/components/InstallCard';
 import { EnablePush } from '@/components/EnablePush';
+import { SendTestPushButton } from '@/components/SendTestPushButton';
 
 /** Runner-facing History (black screen): streak + active-phase completion stat cards over a reverse-chronological list of expandable day cards. */
 export default async function HistoryPage() {
@@ -77,6 +78,18 @@ export default async function HistoryPage() {
         <div className="mt-2 flex flex-col gap-3 border-t border-wi-on-dark-line pt-5">
           <InstallCard />
           <EnablePush />
+          {member.isAdmin && (
+            <>
+              <Link
+                href="/admin"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-[6px] border border-wi-on-dark-line text-2xs font-bold tracking-[0.1em] text-wi-on-dark-2 uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.98]"
+              >
+                <LayoutDashboard className="size-4" />
+                Admin dashboard
+              </Link>
+              <SendTestPushButton tone="dark" />
+            </>
+          )}
           <form action={logout}>
             <button
               type="submit"
