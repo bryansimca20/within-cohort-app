@@ -103,7 +103,7 @@ test('a wrong passcode clears the dots, shows the error, and keeps the selected 
     await user.click(screen.getByRole('button', { name: digit }));
   }
 
-  await screen.findByText('Wrong passcode. Ask the founder to resend.');
+  await screen.findByText('Wrong passcode.');
 
   const dots = screen.getAllByTestId('dot');
   expect(dots.filter((dot) => dot.getAttribute('data-filled') === 'true')).toHaveLength(0);

@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { EnablePush } from '@/components/EnablePush';
+import { SendTestPushButton } from '@/components/SendTestPushButton';
 import { updateCohortStartAction } from './actions';
 
 function phaseLabel(row: DashboardRow): string {
@@ -61,6 +63,21 @@ export default async function AdminDashboardPage({
               Not set yet. Set the start date to open the cohort and start the phase calendar.
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="flex flex-col gap-3">
+          <div>
+            <p className="text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">Notifications</p>
+            <p className="mt-1 text-sm text-wi-ink-500">
+              Verify Web Push in production. Turn on notifications on this device, then send yourself a test.
+            </p>
+          </div>
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+            <EnablePush tone="light" />
+            <SendTestPushButton />
+          </div>
         </CardContent>
       </Card>
 

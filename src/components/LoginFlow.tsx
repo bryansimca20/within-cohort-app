@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, Delete } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Delete, LoaderCircle } from 'lucide-react';
 import { loginAttempt, type LoginState } from '@/app/login/actions';
 import { WithinLogo } from '@/components/brand/WithinLogo';
 import { cn } from '@/lib/utils';
@@ -34,7 +34,7 @@ function initialsOf(name: string): string {
  */
 export function LoginFlow({ roster }: { roster: RosterMember[] }) {
   const router = useRouter();
-  const [state, dispatch] = useActionState(loginAttempt, null);
+  const [state, dispatch, isPending] = useActionState(loginAttempt, null);
   const [step, setStep] = useState<'who' | 'code'>('who');
   const [memberId, setMemberId] = useState('');
   const [name, setName] = useState('');
@@ -96,12 +96,13 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
   }
 
   function del() {
+    if (isPending) return;
     setCode((current) => current.slice(0, -1));
   }
 
   const errorMessage =
     error === 'wrong'
-      ? 'Wrong passcode. Try again.'
+      ? 'Wrong passcode.'
       : error === 'rate'
         ? 'Too many attempts. Wait a few minutes.'
         : '';
@@ -151,8 +152,9 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
         <button
           type="button"
           onClick={back}
+          disabled={isPending}
           aria-label="Back to who is logging"
-          className="-ml-1 flex w-fit items-center bg-transparent p-0 text-wi-paper"
+          className="-ml-1 flex w-fit items-center bg-transparent p-0 text-wi-paper transition-opacity disabled:opacity-40"
         >
           <ArrowLeft className="size-6" />
         </button>
@@ -183,9 +185,16 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
           })}
         </div>
 
-        <p role="alert" className="mt-4.5 min-h-4.5 text-center text-xs font-semibold text-wi-paper">
-          {errorMessage}
-        </p>
+        <div className="mt-4.5 flex min-h-4.5 items-center justify-center gap-2 text-center text-xs font-semibold text-wi-paper">
+          {isPending ? (
+            <span role="status" className="flex items-center gap-2 text-wi-on-dark-2">
+              <LoaderCircle aria-hidden="true" className="size-3.5 animate-spin" />
+              Verifying
+            </span>
+          ) : (
+            <span role="alert">{errorMessage}</span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2.5 bg-wi-paper-dim px-5.5 pt-4.5 pb-7.5">
@@ -194,7 +203,8 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
             key={digit}
             type="button"
             onClick={() => press(digit)}
-            className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95]"
+            disabled={isPending}
+            className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95] disabled:opacity-40 disabled:active:scale-100"
           >
             {digit}
           </button>
@@ -203,15 +213,17 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
         <button
           type="button"
           onClick={() => press('0')}
-          className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95]"
+          disabled={isPending}
+          className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95] disabled:opacity-40 disabled:active:scale-100"
         >
           0
         </button>
         <button
           type="button"
           onClick={del}
+          disabled={isPending}
           aria-label="Delete last digit"
-          className="flex h-14 items-center justify-center rounded-md border-none bg-transparent text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95]"
+          className="flex h-14 items-center justify-center rounded-md border-none bg-transparent text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95] disabled:opacity-40 disabled:active:scale-100"
         >
           <Delete className="size-6" />
         </button>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Bell, BellRing } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type PushState = 'checking' | 'unsupported' | 'blocked' | 'off' | 'on';
 
@@ -25,9 +26,10 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
  * to /api/push/subscribe. Renders nothing when the browser lacks Push
  * support or has permanently blocked notifications, and reflects "Reminders
  * on" once already subscribed. Every failure is silent - a denied prompt or
- * a network error must never break the page.
+ * a network error must never break the page. `tone` picks the palette: `dark`
+ * (default) for the black Today/History screens, `light` for the admin card.
  */
-export function EnablePush() {
+export function EnablePush({ tone = 'dark' }: { tone?: 'dark' | 'light' } = {}) {
   const [state, setState] = useState<PushState>('checking');
 
   useEffect(() => {
@@ -89,9 +91,12 @@ export function EnablePush() {
 
   if (state === 'checking' || state === 'unsupported' || state === 'blocked') return null;
 
-  // Rendered only on the black Today screen (see today/page.tsx). The
-  // `secondary` variant's black-on-transparent styling is invisible there,
-  // so both states override border/text to the on-dark tokens.
+  // On dark screens (Today/History) the `secondary` variant's black-on-
+  // transparent styling is invisible, so border/text are overridden to the
+  // on-dark tokens and the button spans full width. On the light admin card
+  // the default secondary styling already reads, so it keeps its intrinsic
+  // width and no overrides.
+  const dark = tone === 'dark';
   if (state === 'on') {
     return (
       <Button
@@ -99,7 +104,7 @@ export function EnablePush() {
         variant="secondary"
         size="sm"
         disabled
-        className="w-full border-wi-on-dark-3 text-wi-paper disabled:opacity-60"
+        className={cn('disabled:opacity-60', dark && 'w-full border-wi-on-dark-3 text-wi-paper')}
       >
         <BellRing />
         Reminders on
@@ -113,7 +118,7 @@ export function EnablePush() {
       variant="secondary"
       size="sm"
       onClick={enable}
-      className="w-full border-wi-on-dark-3 text-wi-paper hover:bg-wi-on-dark-fill hover:text-wi-paper"
+      className={cn(dark && 'w-full border-wi-on-dark-3 text-wi-paper hover:bg-wi-on-dark-fill hover:text-wi-paper')}
     >
       <Bell />
       Turn on reminders
