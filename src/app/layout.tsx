@@ -30,6 +30,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#000000",
+  // `black-translucent` (above) only pushes web content under the iOS status
+  // bar when the viewport also opts into the safe-area insets. Without this the
+  // web view stays inset below the bar and that strip paints the light <body>
+  // background, showing as a white bar on the home-screen app.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
