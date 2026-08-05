@@ -85,12 +85,9 @@ function PhaseCounter({ status }: { status: TodayStatus }) {
 function Screen({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {/* Bottom clearance must include env(safe-area-inset-bottom): the fixed nav grows
-          by that inset in the installed PWA, so a plain pb-[92px] lets the action buttons
-          crowd the nav on iOS (fine in the browser, where the inset is 0). */}
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-[22px] pb-[calc(92px+env(safe-area-inset-bottom))]">
-        {children}
-      </div>
+      {/* pb-5 is just breathing room above the in-flow nav; the nav owns the home-indicator
+          inset itself, so this no longer has to reserve nav height. */}
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-[22px] pb-5">{children}</div>
     </div>
   );
 }

@@ -69,7 +69,7 @@ export default async function CheckinPage({
     .limit(1);
 
   return (
-    <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-[calc(7rem+env(safe-area-inset-bottom))]" data-surface="dark">
+    <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-6" data-surface="dark">
       <div className="flex items-baseline justify-between">
         <h1 className="text-h2 font-bold tracking-[-0.02em] uppercase">Morning check-in</h1>
         <span className="text-2xs font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">~20s</span>
