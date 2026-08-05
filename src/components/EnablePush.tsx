@@ -28,8 +28,14 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
  * on" once already subscribed. Every failure is silent - a denied prompt or
  * a network error must never break the page. `tone` picks the palette: `dark`
  * (default) for the black Today/History screens, `light` for the admin card.
+ * `showWhenOn` (default true) keeps the "Reminders on" confirmation visible;
+ * pass false on the fixed, non-scrolling Today screen so the control is a pure
+ * nudge that vanishes once granted, costing no permanent layout there.
  */
-export function EnablePush({ tone = 'dark' }: { tone?: 'dark' | 'light' } = {}) {
+export function EnablePush({
+  tone = 'dark',
+  showWhenOn = true,
+}: { tone?: 'dark' | 'light'; showWhenOn?: boolean } = {}) {
   const [state, setState] = useState<PushState>('checking');
 
   useEffect(() => {
@@ -97,6 +103,7 @@ export function EnablePush({ tone = 'dark' }: { tone?: 'dark' | 'light' } = {}) 
   // the default secondary styling already reads, so it keeps its intrinsic
   // width and no overrides.
   const dark = tone === 'dark';
+  if (state === 'on' && !showWhenOn) return null;
   if (state === 'on') {
     return (
       <Button

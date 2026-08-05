@@ -4,6 +4,7 @@ import { db } from '@/db/client';
 import { requireMember } from '@/lib/session';
 import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { getTodayStatus, type TodayStatus } from '@/lib/today';
+import { EnablePush } from '@/components/EnablePush';
 import { cn } from '@/lib/utils';
 
 // 'YYYY-MM-DD' is a plain calendar date with no time component; parsing it
@@ -247,24 +248,32 @@ export default async function TodayPage() {
         </div>
       </div>
 
-      <div className="mt-auto grid grid-cols-2 gap-[10px] pt-5">
-        <Link
-          href="/checkin"
-          className={cn(
-            'flex h-[74px] flex-col items-center justify-center gap-2 rounded-[8px] text-center text-[11px] font-bold tracking-[0.05em] uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]',
-            status.checkinDone ? 'border-[1.5px] border-wi-on-dark-3 text-wi-paper' : 'bg-wi-paper text-wi-black'
-          )}
-        >
-          {status.checkinDone ? <Pencil className="size-5" /> : <Sunrise className="size-5" />}
-          {status.checkinDone ? 'Edit check-in' : 'Morning check-in'}
-        </Link>
-        <Link
-          href="/session"
-          className="flex h-[74px] flex-col items-center justify-center gap-2 rounded-[8px] border-[1.5px] border-wi-on-dark-3 text-center text-[11px] font-bold tracking-[0.05em] text-wi-paper uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]"
-        >
-          <Activity className="size-5" />
-          {status.sessionCount > 0 ? 'Log another session' : 'Log session'}
-        </Link>
+      <div className="mt-auto flex flex-col gap-[10px] pt-5">
+        {/* Discoverable reminder opt-in. Web Push is opt-in per device, and the
+            only other entry point is buried at the bottom of History, so runners
+            never found it. showWhenOn={false} keeps this a pure nudge: it renders
+            only while reminders are off, then returns null (no DOM node, no gap)
+            once granted, so it never permanently costs this fixed screen space. */}
+        <EnablePush showWhenOn={false} />
+        <div className="grid grid-cols-2 gap-[10px]">
+          <Link
+            href="/checkin"
+            className={cn(
+              'flex h-[74px] flex-col items-center justify-center gap-2 rounded-[8px] text-center text-[11px] font-bold tracking-[0.05em] uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]',
+              status.checkinDone ? 'border-[1.5px] border-wi-on-dark-3 text-wi-paper' : 'bg-wi-paper text-wi-black'
+            )}
+          >
+            {status.checkinDone ? <Pencil className="size-5" /> : <Sunrise className="size-5" />}
+            {status.checkinDone ? 'Edit check-in' : 'Morning check-in'}
+          </Link>
+          <Link
+            href="/session"
+            className="flex h-[74px] flex-col items-center justify-center gap-2 rounded-[8px] border-[1.5px] border-wi-on-dark-3 text-center text-[11px] font-bold tracking-[0.05em] text-wi-paper uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]"
+          >
+            <Activity className="size-5" />
+            {status.sessionCount > 0 ? 'Log another session' : 'Log session'}
+          </Link>
+        </div>
       </div>
     </Screen>
   );
