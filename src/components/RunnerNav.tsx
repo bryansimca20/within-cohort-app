@@ -14,14 +14,15 @@ const TABS: { href: string; label: string; icon: ComponentType<{ className?: str
 ];
 
 /** Black bottom nav for the four runner tabs, highlighting the active route. In-flow (the app shell's last
- *  child), not fixed: it owns the home-indicator inset via pb-[env(safe-area-inset-bottom)] and, because it is
- *  placed by document layout rather than the visual viewport, sits at the true bottom from the first paint on
- *  iOS standalone (where a fixed bar renders raised until the first navigation). */
+ *  child), not fixed: placed by document layout rather than the visual viewport, it sits at the true bottom
+ *  from the first paint on iOS standalone (where a fixed bar renders raised until the first navigation). The
+ *  labels sit flush to the bottom edge by intent (no safe-area inset), so on a home-indicator device they
+ *  share that band with the gesture bar. */
 export function RunnerNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="shrink-0 bg-wi-black border-t border-wi-on-dark-line pb-[env(safe-area-inset-bottom)]">
+    <nav className="shrink-0 bg-wi-black border-t border-wi-on-dark-line">
       <div className="mx-auto flex max-w-md">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
