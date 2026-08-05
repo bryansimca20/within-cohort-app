@@ -225,6 +225,22 @@
   }
 }
 
+/* ---- Installed-PWA root surface.
+   iOS paints the document root's background into the safe-area insets and the
+   overscroll (rubber-band) region. The default root background is the light
+   --background (#f2f2f2), so the always-black runner app shows a light strip
+   at the bottom (home-indicator area) and on overscroll of the home-screen
+   app. Commit 8480dcc fixed the top status-bar strip; this pins the whole root
+   surface black in standalone so no exposed edge is ever light. Left unlayered
+   so it wins over the layered `body { bg-background }` above, and scoped to
+   display-mode: standalone so browser tabs keep the light admin/login look. */
+@media (display-mode: standalone) {
+  html,
+  body {
+    background-color: var(--wi-black);
+  }
+}
+
 /* ---- Save-confirmation toast (Toast.tsx): fade + 10px upward slide.
    Gated entirely behind the media query so reduced-motion users land
    straight on the end state (opacity 1, no offset) with no animation. ---- */
