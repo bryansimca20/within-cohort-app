@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 /** Check-in skeleton: title + watch inputs + the four Hooper rows + note + submit, matching the form so the real page lands with no shift. */
 export default function CheckinLoading() {
   return (
-    <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-28">
+    <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <Skeleton className="h-7 w-56" />
       <Skeleton className="mt-2 h-3 w-32" />
 

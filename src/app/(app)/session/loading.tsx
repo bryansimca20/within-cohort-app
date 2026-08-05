@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 /** Session skeleton: title + info chip + type/RPE/duration/distance/note/submit, matching the form so the real page lands with no shift. */
 export default function SessionLoading() {
   return (
-    <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-28">
+    <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <Skeleton className="h-7 w-44" />
       <Skeleton className="mt-2 h-3 w-64" />
 

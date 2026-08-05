@@ -56,7 +56,7 @@ export default async function SessionPage({
     .orderBy(sessionLogs.createdAt);
 
   return (
-    <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-28" data-surface="dark">
+    <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-[calc(7rem+env(safe-area-inset-bottom))]" data-surface="dark">
       <h1 className="text-h2 font-bold tracking-[-0.02em] uppercase">Sessions</h1>
       <p className="mt-1 text-xs text-wi-on-dark-2">Long, hard or race efforts.</p>
 

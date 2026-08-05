@@ -44,7 +44,7 @@ export default async function HistoryPage() {
 
   return (
     <div className="flex flex-1 flex-col bg-wi-black text-wi-paper">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-[22px] pt-[18px] pb-28">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-[22px] pt-[18px] pb-[calc(7rem+env(safe-area-inset-bottom))]">
         <h1 className="text-h2 font-bold tracking-[-0.02em] text-wi-paper uppercase">History</h1>
 
         <div className="grid grid-cols-2 gap-3">

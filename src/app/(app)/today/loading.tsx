@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function TodayLoading() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-[22px] pb-[92px]">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-[22px] pb-[calc(92px+env(safe-area-inset-bottom))]">
         <Skeleton className="h-8 w-52" />
 
         <div className="mt-5 flex items-end justify-between">
