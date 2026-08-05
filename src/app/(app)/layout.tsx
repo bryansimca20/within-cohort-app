@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from 'react';
 import { WithinLogo } from '@/components/brand/WithinLogo';
 import { RunnerNav } from '@/components/RunnerNav';
+import { StandaloneViewportFix } from '@/components/StandaloneViewportFix';
 import { Toast } from '@/components/Toast';
 
 /** Chrome for every logged-in route: one persistent black header (WITHIN logotype only) up top, the fixed
@@ -14,6 +15,7 @@ import { Toast } from '@/components/Toast';
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-wi-black md:flex md:justify-center md:bg-wi-paper-dim md:py-8">
+      <StandaloneViewportFix />
       <div className="relative flex min-h-dvh w-full flex-col bg-wi-black text-wi-paper md:h-[calc(100dvh-4rem)] md:min-h-0 md:max-w-md md:overflow-hidden md:rounded-lg md:border md:border-wi-line md:shadow-(--wi-shadow-lg)">
         <header className="flex w-full items-center px-[22px] pt-[calc(env(safe-area-inset-top)+1rem)] pb-3">
           <WithinLogo color="white" height={18} priority />
