@@ -62,7 +62,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
   // Navigating away is a real external-system side effect, so it stays in
   // an Effect (unlike the render-phase sync above).
   useEffect(() => {
-    if (state && 'ok' in state) router.replace('/today');
+    if (state && 'ok' in state) router.replace(state.onboarded ? '/today' : '/welcome');
   }, [state, router]);
 
   function pick(member: RosterMember) {

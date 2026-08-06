@@ -228,17 +228,21 @@ illustration.
 
 **Motion.** The motion *tokens* ship (`--wi-ease-out`, `--wi-duration-*`, `--wi-press-scale`)
 so any micro-interaction stays on-system: quick, precise, **no visible bounce**, short
-opacity/transform tweens only. Unlike the marketing site this app deliberately does **not**
-add the `motion` package or scroll-reveal animation — it's a 7 a.m. one-handed capture tool,
-so content appears instantly.
+opacity/transform tweens only. Unlike the marketing site the capture screens deliberately
+add **no** `motion` package or scroll-reveal animation. It's a 7 a.m. one-handed capture
+tool, so content appears instantly. The single exception is the first-run `/welcome`
+onboarding route, which lazy-loads `motion` (imported only under
+`src/components/onboarding/`, so route code-splitting keeps it out of every capture-screen
+bundle). New motion must not leak outside that folder.
 
 **Logo.** Always use `WithinLogo` (PNGs in `public/brand/`). **Never redraw, trace, or
 recolour the mark.**
 
 **Intentional divergences from the coming-soon copy — do not "fix" them.** cohort's
 `globals.css` omits `@import "shadcn/tailwind.css";` (no `shadcn` dep; owned primitives
-don't need base-nova's base layer) and the app has no `motion` package. The token layer is
-otherwise identical.
+don't need base-nova's base layer) and the app adds the `motion` package only for the
+`/welcome` onboarding route (never on capture screens). The token layer is otherwise
+identical.
 
 - Built for one-handed phone use at 7 a.m.: large tap targets, minimal typing, sliders
   over keyboards.
@@ -293,6 +297,11 @@ otherwise identical.
   `requireMember()`. The login route is rate-limited.
 - **`took_serving`** is meaningful only in the `within` phase — the core forces it to
   `null` in baseline regardless of input.
+- **First-run onboarding.** `members.onboardedAt` (nullable timestamp) marks first-run
+  completion, stamped once via `markOnboarded` at the end of the `/welcome` flow. Null →
+  the runner is routed to `/welcome`; set → straight to `/today`. Three gates enforce
+  once-ever: the login result, the `(app)` layout, and the `/welcome` page. Detection is
+  server-side only. Never add per-device or localStorage gating.
 
 ## When in Doubt
 

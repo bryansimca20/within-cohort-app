@@ -20,6 +20,7 @@ export const members = pgTable('members', {
   inCohort: boolean('in_cohort').notNull().default(false),
   isAdmin: boolean('is_admin').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  onboardedAt: timestamp('onboarded_at', { withTimezone: true }),
 });
 
 export const dailyCheckins = pgTable('daily_checkins', {

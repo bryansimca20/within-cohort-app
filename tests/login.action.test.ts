@@ -8,7 +8,7 @@ test('authenticate returns memberId for correct passcode', async () => {
   const { db } = await makeTestDb();
   const hash = await hashPasscode('1234');
   const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: hash, inCohort: true, isAdmin: false }).returning();
-  expect(await authenticate(db, m.id, ' 1234 ')).toBe(m.id);
+  expect((await authenticate(db, m.id, ' 1234 '))?.id).toBe(m.id);
   expect(await authenticate(db, m.id, 'wrong')).toBeNull();
 });
 
@@ -29,7 +29,7 @@ test('attemptLogin returns { ok: true, memberId } for a correct passcode against
   const { db } = await makeTestDb();
   const hash = await hashPasscode('1234');
   const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: hash, inCohort: true, isAdmin: false }).returning();
-  expect(await attemptLogin(db, m.id, '1234')).toEqual({ ok: true, memberId: m.id });
+  expect(await attemptLogin(db, m.id, '1234')).toEqual({ ok: true, memberId: m.id, onboarded: false });
 });
 
 test('attemptLogin returns { error: "wrong" } for a non-UUID memberId without touching the db', async () => {
@@ -43,4 +43,14 @@ test('attemptLogin returns { error: "rate" } once the memberId bucket is exhaust
   for (let i = 0; i < 10; i++) rateLimit(memberId);
 
   expect(await attemptLogin(db, memberId, '1234')).toEqual({ error: 'rate' });
+});
+
+test('attemptLogin reports onboarded: true once the member has an onboardedAt', async () => {
+  const { db } = await makeTestDb();
+  const hash = await hashPasscode('1234');
+  const [m] = await db
+    .insert(members)
+    .values({ name: 'Ana', passcodeHash: hash, inCohort: true, isAdmin: false, onboardedAt: new Date() })
+    .returning();
+  expect(await attemptLogin(db, m.id, '1234')).toEqual({ ok: true, memberId: m.id, onboarded: true });
 });

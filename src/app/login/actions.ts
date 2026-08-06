@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { redirect } from 'next/navigation';
 import { db as prodDb } from '@/db/client';
-import { members } from '@/db/schema';
+import { members, type Member } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { verifyPasscode } from '@/lib/passcode';
 import { getSession } from '@/lib/session';
@@ -20,11 +20,11 @@ type AnyPgDatabase = PgDatabase<PgQueryResultHKT, Schema>;
 // passcode, resolve whether it's correct. No cookies, no redirects, no rate
 // limiting; those live in the state-returning `loginAttempt` action below so
 // this stays trivial to exercise against the pglite test harness.
-export async function authenticate(db: AnyPgDatabase, memberId: string, passcode: string): Promise<string | null> {
+export async function authenticate(db: AnyPgDatabase, memberId: string, passcode: string): Promise<Member | null> {
   if (!memberId) return null;
   const [m] = await db.select().from(members).where(eq(members.id, memberId));
   if (!m) return null;
-  return (await verifyPasscode(passcode, m.passcodeHash)) ? m.id : null;
+  return (await verifyPasscode(passcode, m.passcodeHash)) ? m : null;
 }
 
 // Standard 8-4-4-4-12 hex UUID shape. Members are looked up by `id` (a uuid
@@ -34,7 +34,7 @@ export async function authenticate(db: AnyPgDatabase, memberId: string, passcode
 // Map without bound.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-type LoginResult = { ok: true; memberId: string } | { error: 'wrong' | 'rate' };
+type LoginResult = { ok: true; memberId: string; onboarded: boolean } | { error: 'wrong' | 'rate' };
 
 // Pure, testable core for the state-returning login flow: guards the memberId
 // shape, rate-limits, then authenticates, resolving to a LoginResult instead
@@ -45,16 +45,16 @@ type LoginResult = { ok: true; memberId: string } | { error: 'wrong' | 'rate' };
 export async function attemptLogin(db: AnyPgDatabase, memberId: string, passcode: string): Promise<LoginResult> {
   if (!memberId || !UUID_RE.test(memberId)) return { error: 'wrong' };
   if (!rateLimit(memberId)) return { error: 'rate' };
-  const ok = await authenticate(db, memberId, passcode);
-  if (!ok) return { error: 'wrong' };
-  return { ok: true, memberId: ok };
+  const member = await authenticate(db, memberId, passcode);
+  if (!member) return { error: 'wrong' };
+  return { ok: true, memberId: member.id, onboarded: member.onboardedAt != null };
 }
 
 // Type-only export from a "use server" file: erased at compile time (no
 // runtime binding), so it doesn't trip the "use server" files may only
 // export async functions" constraint. Same convention already used by
 // admin/members/actions.ts (CreateMemberInput, AddMemberState, etc.).
-export type LoginState = { ok: true } | { error: 'wrong' | 'rate' } | null;
+export type LoginState = { ok: true; onboarded: boolean } | { error: 'wrong' | 'rate' } | null;
 
 /** State-returning login action for the keypad LoginFlow (Task 8): delegates the decision to the pure `attemptLogin` core, then sets the session cookie on success instead of redirecting. */
 export async function loginAttempt(_prev: LoginState, formData: FormData): Promise<LoginState> {
@@ -65,7 +65,7 @@ export async function loginAttempt(_prev: LoginState, formData: FormData): Promi
   const s = await getSession();
   s.memberId = res.memberId;
   await s.save();
-  return { ok: true };
+  return { ok: true, onboarded: res.onboarded };
 }
 
 export async function logout() {

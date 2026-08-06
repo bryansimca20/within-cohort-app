@@ -22,6 +22,13 @@
       "when": 1785311645553,
       "tag": "0002_young_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785822996640,
+      "tag": "0003_luxuriant_alice",
+      "breakpoints": true
     }
   ]
 }

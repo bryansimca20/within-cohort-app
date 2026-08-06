@@ -119,8 +119,8 @@ test('a wrong passcode clears the dots, shows the error, and keeps the selected 
   expect(submittedFormData.get('passcode')).toBe('1234');
 });
 
-test('a correct passcode navigates to /today', async () => {
-  loginAttemptMock.mockResolvedValueOnce({ ok: true });
+test('an onboarded member navigates to /today', async () => {
+  loginAttemptMock.mockResolvedValueOnce({ ok: true, onboarded: true });
   const user = userEvent.setup();
   render(<LoginFlow roster={roster} />);
 
@@ -130,4 +130,17 @@ test('a correct passcode navigates to /today', async () => {
   }
 
   await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/today'));
+});
+
+test('a first-time login navigates to /welcome', async () => {
+  loginAttemptMock.mockResolvedValueOnce({ ok: true, onboarded: false });
+  const user = userEvent.setup();
+  render(<LoginFlow roster={roster} />);
+
+  await user.click(screen.getByRole('button', { name: /Ana Wijaya/i }));
+  for (const digit of ['1', '2', '3', '4']) {
+    await user.click(screen.getByRole('button', { name: digit }));
+  }
+
+  await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/welcome'));
 });
