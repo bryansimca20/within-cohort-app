@@ -15,6 +15,13 @@ const KEYPAD_ROWS = [
   ['7', '8', '9'],
 ];
 
+// On-dark keypad key: a subtly raised tile on the black screen (matches the
+// roster tiles and RunnerNav language), white numeral, quick press feedback
+// that scales down and brightens the fill. Shared so the digit keys and the
+// standalone 0 can never drift apart.
+const KEYPAD_KEY_CLASS =
+  'flex h-14 items-center justify-center rounded-md border border-wi-on-dark-line bg-wi-on-dark-fill text-[22px] font-bold tracking-[-0.02em] text-wi-paper transition-[transform,background-color] duration-[120ms] ease-[var(--wi-ease-standard)] hover:bg-wi-on-dark-line active:scale-[0.95] active:bg-wi-on-dark-line disabled:opacity-40 disabled:hover:bg-wi-on-dark-fill disabled:active:scale-100';
+
 /** First letter of up to the first two words of a name, uppercased, for an initials tile. */
 function initialsOf(name: string): string {
   return name
@@ -197,25 +204,20 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2.5 bg-wi-paper-dim px-5.5 pt-4.5 pb-7.5">
+      <div className="grid grid-cols-3 gap-2.5 border-t border-wi-on-dark-line px-5.5 pt-5 pb-[calc(1.875rem+env(safe-area-inset-bottom))]">
         {KEYPAD_ROWS.flat().map((digit) => (
           <button
             key={digit}
             type="button"
             onClick={() => press(digit)}
             disabled={isPending}
-            className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95] disabled:opacity-40 disabled:active:scale-100"
+            className={KEYPAD_KEY_CLASS}
           >
             {digit}
           </button>
         ))}
         <div aria-hidden="true" className="h-14" />
-        <button
-          type="button"
-          onClick={() => press('0')}
-          disabled={isPending}
-          className="flex h-14 items-center justify-center rounded-md border border-wi-line bg-wi-paper text-[22px] font-bold tracking-[-0.02em] text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95] disabled:opacity-40 disabled:active:scale-100"
-        >
+        <button type="button" onClick={() => press('0')} disabled={isPending} className={KEYPAD_KEY_CLASS}>
           0
         </button>
         <button
@@ -223,7 +225,7 @@ export function LoginFlow({ roster }: { roster: RosterMember[] }) {
           onClick={del}
           disabled={isPending}
           aria-label="Delete last digit"
-          className="flex h-14 items-center justify-center rounded-md border-none bg-transparent text-wi-black transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95] disabled:opacity-40 disabled:active:scale-100"
+          className="flex h-14 items-center justify-center rounded-md bg-transparent text-wi-on-dark-2 transition-[transform,color] duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.95] active:text-wi-paper disabled:opacity-40 disabled:active:scale-100"
         >
           <Delete className="size-6" />
         </button>
