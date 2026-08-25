@@ -1,10 +1,10 @@
 import { SESSION_TYPES } from '@/lib/validation';
 import { NumberField } from '@/components/NumberField';
 import { RpeSlider } from '@/components/RpeSlider';
+import { ServingToggleField } from '@/components/ServingToggleField';
 import { SessionTypeField } from '@/components/SessionTypeField';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 
 type SessionFormExisting = {
@@ -46,13 +46,7 @@ export function SessionForm({ action, showServingToggle, submitLabel, from = 'hi
       </div>
 
       {showServingToggle && (
-        <div className="flex items-center gap-3 rounded-lg border border-wi-on-dark-line p-4 text-wi-paper">
-          <div className="flex-1">
-            <p className="text-sm font-semibold">Took a serving</p>
-            <p className="text-xs text-wi-on-dark-2">One serving per qualifying session</p>
-          </div>
-          <Switch name="tookServing" defaultChecked={existing?.tookServing ?? false} />
-        </div>
+        <ServingToggleField name="tookServing" defaultChecked={existing?.tookServing ?? false} />
       )}
 
       <div className="flex flex-col gap-1.5">
