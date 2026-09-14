@@ -22,9 +22,9 @@ export type CreateMemberInput = {
 };
 
 // Pure, testable core: generate a plaintext passcode, hash it, and insert a
-// new member. Returns both the persisted member and the plaintext so the
-// caller can show it exactly once; only the hash is ever written to the db,
-// and this function never logs the plaintext.
+// new member. Writes the hash (what login verifies) and the plaintext (what a
+// founder can later reveal to remind a member of their code). Returns the
+// plaintext so the caller can show it immediately; never logs it.
 export async function createMember(
   db: AnyPgDatabase,
   input: CreateMemberInput,
@@ -37,6 +37,7 @@ export async function createMember(
     .values({
       name: input.name,
       passcodeHash,
+      passcodePlain: plaintext,
       inCohort: input.inCohort,
       isAdmin: input.isAdmin,
     })
@@ -45,34 +46,49 @@ export async function createMember(
   return { member, plaintext };
 }
 
-// Pure, testable core: regenerate and re-hash a member's passcode in place.
-// Returns the new plaintext so the caller can show it exactly once; the old
-// hash is fully overwritten, so the previous passcode stops working.
+// Pure, testable core: regenerate a member's passcode in place, overwriting
+// both the hash and the stored plaintext. The previous passcode stops working
+// and stops being revealable. Returns the new plaintext for immediate display.
 export async function resetMemberPasscode(db: AnyPgDatabase, memberId: string): Promise<{ plaintext: string }> {
   const plaintext = generatePasscode();
   const passcodeHash = await hashPasscode(plaintext);
 
-  await db.update(members).set({ passcodeHash }).where(eq(members.id, memberId));
+  await db.update(members).set({ passcodeHash, passcodePlain: plaintext }).where(eq(members.id, memberId));
 
   return { plaintext };
 }
 
-export type UpdateMemberFlagsInput = {
+// Pure, testable core: read back a member's passcode so an admin can remind
+// them of it. Returns null when the member is unknown, or when the row predates
+// plaintext storage and only has a hash (unrecoverable by design).
+export async function getMemberPasscode(db: AnyPgDatabase, memberId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ passcodePlain: members.passcodePlain })
+    .from(members)
+    .where(eq(members.id, memberId));
+
+  return row?.passcodePlain ?? null;
+}
+
+export type UpdateMemberInput = {
+  name: string;
   inCohort: boolean;
   isAdmin: boolean;
 };
 
-// Pure, testable core: update a member's cohort flags. Never touches
-// passcodeHash. Start date and timezone are cohort-wide config, not
-// per-member, so they are not settable here.
-export async function updateMemberFlags(
+// Pure, testable core: update a member's name and cohort flags. Never touches
+// passcodeHash or passcodePlain, so a rename leaves the member's login intact.
+// Start date and timezone are cohort-wide config, not per-member, so they are
+// not settable here.
+export async function updateMember(
   db: AnyPgDatabase,
   memberId: string,
-  input: UpdateMemberFlagsInput,
+  input: UpdateMemberInput,
 ): Promise<Member> {
   const [member] = await db
     .update(members)
     .set({
+      name: input.name,
       inCohort: input.inCohort,
       isAdmin: input.isAdmin,
     })
@@ -84,11 +100,11 @@ export async function updateMemberFlags(
 
 // ---------------------------------------------------------------------------
 // Server-action wrappers. Each is admin-gated first, then parses FormData and
-// calls the matching pure core against the prod db. addMemberAction and
-// resetPasscodeAction return the freshly generated plaintext in the action
-// state (used with useActionState from a client component) so the UI can
-// render it exactly once. The plaintext never goes into a redirect/query
-// string, so it never lands in browser history, and it is never logged.
+// calls the matching pure core against the prod db. addMemberAction,
+// resetPasscodeAction and revealPasscodeAction return a passcode in the action
+// state (used with useActionState from a client component) so the UI can render
+// it on demand. A passcode never goes into a redirect/query string, so it never
+// lands in browser history, and it is never logged.
 // ---------------------------------------------------------------------------
 
 export type AddMemberState =
@@ -140,16 +156,44 @@ export async function resetPasscodeAction(
   return { status: 'success', name, plaintext };
 }
 
-export async function updateFlagsAction(formData: FormData): Promise<void> {
+export type RevealPasscodeState =
+  | { status: 'idle' }
+  | { status: 'error'; message: string }
+  | { status: 'success'; plaintext: string };
+
+export async function revealPasscodeAction(
+  _prevState: RevealPasscodeState,
+  formData: FormData,
+): Promise<RevealPasscodeState> {
+  await requireAdmin();
+
+  const memberId = String(formData.get('memberId') ?? '');
+  if (!memberId) {
+    return { status: 'error', message: 'Missing member.' };
+  }
+
+  const plaintext = await getMemberPasscode(prodDb, memberId);
+  if (!plaintext) {
+    return { status: 'error', message: 'Not stored. Reset to issue a new one.' };
+  }
+
+  return { status: 'success', plaintext };
+}
+
+export async function updateMemberAction(formData: FormData): Promise<void> {
   await requireAdmin();
 
   const memberId = String(formData.get('memberId') ?? '');
   if (!memberId) return;
 
+  const name = String(formData.get('name') ?? '').trim();
+  if (!name) return;
+
   const inCohort = formData.get('inCohort') === 'on';
   const isAdmin = formData.get('isAdmin') === 'on';
 
-  await updateMemberFlags(prodDb, memberId, {
+  await updateMember(prodDb, memberId, {
+    name,
     inCohort,
     isAdmin,
   });

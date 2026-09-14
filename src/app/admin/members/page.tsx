@@ -2,18 +2,21 @@ import { asc } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { members } from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
-import { updateFlagsAction } from './actions';
-import { AddMemberForm, ResetPasscodeButton } from './MemberForms';
+import { updateMemberAction } from './actions';
+import { AddMemberForm, PasscodeCell } from './MemberForms';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-// Admin-only roster management: add members (a passcode is generated and
-// shown once), toggle cohort/admin flags, and reset a member's passcode.
-// Start date and timezone are cohort-wide config (env / constant), not set
-// per member here. Nothing here ever stores or logs a plaintext passcode;
-// only the bcrypt hash is persisted.
+// Admin-only roster management: add members, rename them, toggle cohort/admin
+// flags, and reveal or reset a passcode. Start date and timezone are
+// cohort-wide config (env / constant), not set per member here. A passcode is
+// stored in the clear so a founder can remind a member of it, but it is never
+// rendered into this page's HTML: PasscodeCell fetches it through an
+// admin-gated action only when asked.
 export default async function AdminMembersPage() {
   await requireAdmin();
 
@@ -23,7 +26,9 @@ export default async function AdminMembersPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold text-wi-black">Members</h1>
-        <p className="mt-1 text-sm text-wi-ink-500">Add members, adjust cohort flags, and reset passcodes.</p>
+        <p className="mt-1 text-sm text-wi-ink-500">
+          Add members, rename them, adjust cohort flags, and show or reset passcodes.
+        </p>
       </div>
 
       <Card>
@@ -39,40 +44,42 @@ export default async function AdminMembersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Cohort settings</TableHead>
+              <TableHead>Member</TableHead>
               <TableHead>Passcode</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {roster.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="py-6 text-sm whitespace-normal text-wi-ink-500">
+                <TableCell colSpan={2} className="py-6 text-sm whitespace-normal text-wi-ink-500">
                   No members yet. Add one above.
                 </TableCell>
               </TableRow>
             ) : (
               roster.map((m) => (
                 <TableRow key={m.id}>
-                  <TableCell className="align-top font-medium text-wi-black">{m.name}</TableCell>
                   <TableCell className="align-top whitespace-normal">
-                    <form action={updateFlagsAction} className="flex flex-wrap items-end gap-4">
+                    <form action={updateMemberAction} className="flex flex-wrap items-end gap-4">
                       <input type="hidden" name="memberId" value={m.id} />
-                      <label className="flex items-center gap-1.5 text-xs font-medium text-wi-black">
+                      <div className="flex min-w-40 flex-col gap-1.5">
+                        <Label htmlFor={`name-${m.id}`}>Name</Label>
+                        <Input id={`name-${m.id}`} type="text" name="name" defaultValue={m.name} required />
+                      </div>
+                      <label className="flex items-center gap-1.5 pb-2 text-xs font-medium text-wi-black">
                         <Checkbox name="inCohort" defaultChecked={m.inCohort} />
                         In cohort
                       </label>
-                      <label className="flex items-center gap-1.5 text-xs font-medium text-wi-black">
+                      <label className="flex items-center gap-1.5 pb-2 text-xs font-medium text-wi-black">
                         <Checkbox name="isAdmin" defaultChecked={m.isAdmin} />
                         Admin
                       </label>
-                      <Button type="submit" variant="outline" size="sm">
+                      <Button type="submit" variant="outline" size="sm" className="mb-1">
                         Save
                       </Button>
                     </form>
                   </TableCell>
                   <TableCell className="align-top whitespace-normal">
-                    <ResetPasscodeButton memberId={m.id} name={m.name} />
+                    <PasscodeCell memberId={m.id} name={m.name} />
                   </TableCell>
                 </TableRow>
               ))

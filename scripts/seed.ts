@@ -51,6 +51,7 @@ async function seed(): Promise<SeedResult[]> {
     await db.insert(members).values({
       name: entry.name,
       passcodeHash,
+      passcodePlain: passcode,
       inCohort: entry.inCohort,
       isAdmin: entry.isAdmin,
     });

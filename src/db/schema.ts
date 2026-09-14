@@ -17,6 +17,11 @@ export const members = pgTable('members', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   passcodeHash: text('passcode_hash').notNull(),
+  // The same passcode in the clear, so a founder can remind a member of the
+  // code they already have instead of resetting it. Nullable: members created
+  // before this column existed have a hash but no recoverable plaintext.
+  // passcodeHash stays the only value login verifies against.
+  passcodePlain: text('passcode_plain'),
   inCohort: boolean('in_cohort').notNull().default(false),
   isAdmin: boolean('is_admin').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

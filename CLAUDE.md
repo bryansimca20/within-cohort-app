@@ -4,7 +4,7 @@
 
 Installable PWA where the WITHIN Cohort (7 runners + 2-3 founders) logs the Cohort
 Protocol every day. It is the operational tool behind the deck in
-`../presentations/2026-07-20-within-cohort-protocol/`. Full spec and plan:
+`../presentations/within-cohort-protocol-2026-07-20/`. Full spec and plan:
 
 - Spec: [docs/superpowers/specs/2026-07-23-within-cohort-log-design.md](docs/superpowers/specs/2026-07-23-within-cohort-log-design.md)
 - Plan: `docs/superpowers/plans/2026-07-23-within-cohort-log.md` (gitignored, local only)
@@ -291,10 +291,19 @@ identical.
   Deletion is a hard delete. Still no backfill in v1 (a missed day is a visible
   gap, not an invented row).
 - **Auth.** Login is member-name select + a **4-digit passcode** (`generatePasscode` emits
-  1000-9999). Store only the bcrypt passcode hash. A freshly generated plaintext is shown
-  once (seed console or an admin `useActionState` return) and never logged or put in a
-  URL. Every admin action/page calls `requireAdmin()` first; the runner area calls
-  `requireMember()`. The login route is rate-limited.
+  1000-9999). `members.passcode_hash` (bcrypt) is the **only** value login verifies
+  against. `members.passcode_plain` stores the same code in the clear so a founder can
+  remind a member of it from `/admin/members` without resetting it; it is nullable
+  because rows created before that column have a hash and nothing recoverable. Both
+  columns are written together by `createMember` / `resetMemberPasscode` / `seed`, so a
+  reset invalidates the old code and makes it unrevealable. A passcode is never logged,
+  never put in a URL, and never rendered into page HTML: the admin roster fetches one
+  through `revealPasscodeAction` on demand, so an unopened `/admin/members` response
+  carries no codes. This is a deliberate tradeoff for an 8-person internal tool. A
+  4-digit space is 9000 candidates, so a leaked db yields every code to offline brute
+  force whether or not the plaintext is stored; the rate limiter on the login route is
+  the real defense. Every admin action/page calls `requireAdmin()` first; the runner area
+  calls `requireMember()`.
 - **`took_serving`** is meaningful only in the `within` phase — the core forces it to
   `null` in baseline regardless of input.
 - **First-run onboarding.** `members.onboardedAt` (nullable timestamp) marks first-run
