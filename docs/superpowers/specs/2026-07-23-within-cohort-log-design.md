@@ -345,7 +345,7 @@ background sync support is unreliable regardless).
 - On first check-in (or via a settings prompt), request notification permission and
   register a Web Push subscription to `/api/push/subscribe`, stored in
   `push_subscriptions`.
-- A **Vercel cron job at 07:00 Asia/Jakarta (= 00:00 UTC)** calls `/api/cron/remind`,
+- A **Vercel cron job at 09:00 Asia/Jakarta (= 02:00 UTC)** calls `/api/cron/remind`,
   which pushes a "morning check-in ready" notification **only to members who have not
   yet checked in today**.
 - VAPID keys live in environment variables. Use a standard Web Push library.
@@ -434,6 +434,6 @@ system.
 4. The Today screen shows the correct phase, day, status, and streak.
 5. A founder sees today's completion grid and the "missing today" list, and can export
    all data as CSV.
-6. Installed members receive a 07:00 push reminder only when they have not checked in
+6. Installed members receive a 09:00 push reminder only when they have not checked in
    that day.
 7. All inputs are validated server-side; out-of-range or malformed writes are rejected.

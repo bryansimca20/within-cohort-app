@@ -6,12 +6,14 @@ import { membersNeedingReminder } from '@/lib/reminders';
 import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { sendPush } from '@/lib/push';
 
-// Vercel Cron entry point (see vercel.json for the 07:00 Asia/Jakarta
-// schedule): pushes a "morning check-in ready" reminder to every in-cohort
-// member who has not yet checked in for their local today. This route is
-// public in middleware (Vercel Cron has no session cookie), so CRON_SECRET
-// is the actual gate - Vercel sends it as a Bearer token automatically once
-// the env var is set on the project.
+// Vercel Cron entry point: pushes a "morning check-in ready" reminder to every
+// in-cohort member who has not yet checked in for their local today. Vercel
+// cron expressions are UTC-only, so vercel.json carries `0 2 * * *`, which is
+// 09:00 Asia/Jakarta year-round (UTC+7, no DST).
+//
+// This route is public in middleware (Vercel Cron has no session cookie), so
+// CRON_SECRET is the actual gate - Vercel sends it as a Bearer token
+// automatically once the env var is set on the project.
 export async function GET(request: Request): Promise<Response> {
   const secret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
