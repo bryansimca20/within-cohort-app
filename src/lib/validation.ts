@@ -3,6 +3,9 @@ export const SESSION_TYPES = ['easy','long','tempo','interval','recovery','race'
 export const checkinSchema = z.object({
   recovery: z.coerce.number().int().min(0).max(100),
   restingHr: z.coerce.number().int().min(25).max(120),
+  // Optional: blank must reach here as undefined, never as '' or null,
+  // both of which z.coerce.number() would turn into a real 0.
+  hrvMs: z.coerce.number().int().min(1).max(300).optional(),
   sleepHours: z.coerce.number().min(0).max(16),
   hooperSleep: z.coerce.number().int().min(1).max(5),
   hooperFatigue: z.coerce.number().int().min(1).max(5),

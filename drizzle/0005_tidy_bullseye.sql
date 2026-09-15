@@ -1,0 +1,1 @@
+ALTER TABLE "daily_checkins" ADD COLUMN "hrv_ms" integer;

@@ -31,6 +31,7 @@ type CheckinExportRow = {
   phase: string;
   recovery: number;
   restingHr: number;
+  hrvMs: number | null;
   sleepHours: string;
   hooperSleep: number;
   hooperFatigue: number;
@@ -53,6 +54,7 @@ export async function fetchCheckinExportRows(db: AnyPgDatabase): Promise<Checkin
       phase: dailyCheckins.phase,
       recovery: dailyCheckins.recovery,
       restingHr: dailyCheckins.restingHr,
+      hrvMs: dailyCheckins.hrvMs,
       sleepHours: dailyCheckins.sleepHours,
       hooperSleep: dailyCheckins.hooperSleep,
       hooperFatigue: dailyCheckins.hooperFatigue,
@@ -78,6 +80,7 @@ export function checkinRowsToCsvRows(rows: CheckinExportRow[]): Record<string, u
     phase: r.phase,
     recovery: r.recovery,
     resting_hr: r.restingHr,
+    hrv_ms: r.hrvMs,
     sleep_hours: r.sleepHours,
     hooper_sleep: r.hooperSleep,
     hooper_fatigue: r.hooperFatigue,

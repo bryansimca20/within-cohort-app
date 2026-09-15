@@ -96,27 +96,32 @@ export default async function CheckinPage({
               step={1}
               defaultValue={existing?.recovery}
             />
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <NumberField
-                  name="restingHr"
-                  label="Resting HR (bpm)"
-                  min={25}
-                  max={120}
-                  step={1}
-                  defaultValue={existing?.restingHr}
-                />
-              </div>
-              <div className="flex-1">
-                <NumberField
-                  name="sleepHours"
-                  label="Sleep (hrs)"
-                  min={0}
-                  max={16}
-                  step={0.1}
-                  defaultValue={existing?.sleepHours}
-                />
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              <NumberField
+                name="restingHr"
+                label="Resting HR (bpm)"
+                min={25}
+                max={120}
+                step={1}
+                defaultValue={existing?.restingHr}
+              />
+              <NumberField
+                name="hrvMs"
+                label="HRV (ms)"
+                min={1}
+                max={300}
+                step={1}
+                optional
+                defaultValue={existing?.hrvMs ?? undefined}
+              />
+              <NumberField
+                name="sleepHours"
+                label="Sleep (hrs)"
+                min={0}
+                max={16}
+                step={0.1}
+                defaultValue={existing?.sleepHours}
+              />
             </div>
           </div>
 

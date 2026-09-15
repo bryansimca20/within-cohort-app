@@ -35,6 +35,11 @@ export const dailyCheckins = pgTable('daily_checkins', {
   phase: phaseEnum('phase').notNull(),
   recovery: integer('recovery').notNull(),
   restingHr: integer('resting_hr').notNull(),
+  // Heart rate variability in milliseconds, as the watch reports it. Nullable
+  // and optional on the form: not every device reports HRV every morning, and
+  // a guessed value is worse than a missing one for the phase-2 analysis.
+  // Rows written before this column existed have no value either.
+  hrvMs: integer('hrv_ms'),
   sleepHours: numeric('sleep_hours', { precision: 3, scale: 1 }).notNull(),
   hooperSleep: integer('hooper_sleep').notNull(),
   hooperFatigue: integer('hooper_fatigue').notNull(),

@@ -18,6 +18,7 @@ test('checkinRowsToCsvRows flattens to snake_case columns in the required order'
       phase: 'baseline',
       recovery: 72,
       restingHr: 48,
+      hrvMs: 52,
       sleepHours: '7.5',
       hooperSleep: 3,
       hooperFatigue: 2,
@@ -35,6 +36,7 @@ test('checkinRowsToCsvRows flattens to snake_case columns in the required order'
     'phase',
     'recovery',
     'resting_hr',
+    'hrv_ms',
     'sleep_hours',
     'hooper_sleep',
     'hooper_fatigue',
@@ -49,6 +51,7 @@ test('checkinRowsToCsvRows flattens to snake_case columns in the required order'
     phase: 'baseline',
     recovery: 72,
     resting_hr: 48,
+    hrv_ms: 52,
     sleep_hours: '7.5',
     hooper_sleep: 3,
     hooper_fatigue: 2,
@@ -67,6 +70,7 @@ test('checkinRowsToCsvRows null note serializes as an empty CSV cell', () => {
       phase: 'baseline',
       recovery: 72,
       restingHr: 48,
+      hrvMs: 52,
       sleepHours: '7.5',
       hooperSleep: 3,
       hooperFatigue: 2,
@@ -78,9 +82,9 @@ test('checkinRowsToCsvRows null note serializes as an empty CSV cell', () => {
   ]);
   const csv = toCsv(rows);
   const cells = csv.split('\n')[1].split(',');
-  expect(cells[10]).toBe(''); // note column (index 10) is empty
+  expect(cells[11]).toBe(''); // note column (index 11) is empty
   expect(csv.split('\n')[0]).toBe(
-    'member,local_date,phase,recovery,resting_hr,sleep_hours,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
+    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hours,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
   );
 });
 
@@ -185,7 +189,7 @@ test('fetchCheckinExportRows joins member name and orders by member then date', 
   const csvRows = checkinRowsToCsvRows(rows);
   const csv = toCsv(csvRows);
   expect(csv.split('\n')[0]).toBe(
-    'member,local_date,phase,recovery,resting_hr,sleep_hours,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
+    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hours,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
   );
   expect(csv).toContain('Amy,2026-08-01');
 });
@@ -211,4 +215,27 @@ test('fetchSessionExportRows joins member name and orders by member then date', 
   expect(csvRows[0].took_serving).toBeNull();
   expect(csvRows[1].took_serving).toBe(true);
   expect(csvRows[1].session_type_other).toBe('Fartlek');
+});
+
+test('checkinRowsToCsvRows null hrv_ms serializes as an empty CSV cell, never a zero', () => {
+  const rows = checkinRowsToCsvRows([
+    {
+      member: 'Ana',
+      localDate: '2026-08-01',
+      phase: 'baseline',
+      recovery: 72,
+      restingHr: 48,
+      hrvMs: null,
+      sleepHours: '7.5',
+      hooperSleep: 3,
+      hooperFatigue: 2,
+      hooperSoreness: 2,
+      hooperStress: 1,
+      note: null,
+      createdAt: new Date('2026-08-01T09:00:00.000Z'),
+    },
+  ]);
+  expect(rows[0].hrv_ms).toBeNull();
+  const cells = toCsv(rows).split('\n')[1].split(',');
+  expect(cells[5]).toBe('');
 });

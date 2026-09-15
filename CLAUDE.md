@@ -309,6 +309,12 @@ identical.
   force whether or not the plaintext is stored; the rate limiter on the login route is
   the real defense. Every admin action/page calls `requireAdmin()` first; the runner area
   calls `requireMember()`.
+- **HRV is the one optional capture field.** `daily_checkins.hrv_ms` is nullable and
+  the form input is not `required`: not every watch reports HRV every morning, and a
+  guessed reading is worse than a missing one. `z.coerce.number()` turns both `null`
+  and `''` into `0`, so the action wrapper normalises a blank to `undefined` before
+  the schema sees it; never let a skipped reading persist as `0`. Every other check-in
+  field stays required.
 - **`took_serving`** is meaningful only in the `within` phase — the core forces it to
   `null` in baseline regardless of input.
 - **First-run onboarding.** `members.onboardedAt` (nullable timestamp) marks first-run

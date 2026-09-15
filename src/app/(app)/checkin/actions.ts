@@ -41,6 +41,10 @@ export async function saveCheckin(db: AnyPgDatabase, member: Member, input: unkn
     phase: state,
     recovery: parsed.recovery,
     restingHr: parsed.restingHr,
+    // Explicit null, not undefined: this same object is the upsert's
+    // update set, so clearing the field on a same-day edit has to write
+    // the null back rather than leave the morning's reading stranded.
+    hrvMs: parsed.hrvMs ?? null,
     // numeric(3,1) columns are string-mode in drizzle: convert so the value
     // round-trips (parsed.sleepHours is a coerced number, e.g. 7.5).
     sleepHours: parsed.sleepHours.toString(),
@@ -88,9 +92,17 @@ export async function saveCheckinAction(formData: FormData): Promise<void> {
     redirect('/checkin?error=1');
   }
 
+  // HRV is the one optional watch field. FormData gives null when the input is
+  // absent and '' when it is present but empty, and z.coerce.number() turns
+  // both into 0, so normalise to undefined and let the schema's .optional()
+  // handle it. Without this a member who skips HRV would silently log 0 ms.
+  const hrvMsRaw = formData.get('hrvMs');
+  const hrvMs = hrvMsRaw !== null && String(hrvMsRaw).trim() !== '' ? hrvMsRaw : undefined;
+
   const input = {
     recovery: recoveryRaw,
     restingHr: restingHrRaw,
+    hrvMs,
     sleepHours: sleepHoursRaw,
     hooperSleep: hooperSleepRaw,
     hooperFatigue: hooperFatigueRaw,

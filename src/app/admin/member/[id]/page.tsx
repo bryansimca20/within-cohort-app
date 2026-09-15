@@ -80,7 +80,9 @@ export default async function AdminMemberPage({ params }: { params: Promise<{ id
                     <p className="text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">Check-in</p>
                     {day.checkin ? (
                       <p className="mt-1 text-sm leading-relaxed text-wi-black">
-                        Recovery {day.checkin.recovery} · RHR {day.checkin.restingHr} · Sleep {day.checkin.sleepHours}h
+                        Recovery {day.checkin.recovery} · RHR {day.checkin.restingHr}
+                        {day.checkin.hrvMs !== null && <> · HRV {day.checkin.hrvMs} ms</>} · Sleep{' '}
+                        {day.checkin.sleepHours}h
                         <br />
                         Hooper: Sleep {day.checkin.hooperSleep}, Fatigue {day.checkin.hooperFatigue}, Soreness{' '}
                         {day.checkin.hooperSoreness}, Stress {day.checkin.hooperStress}
