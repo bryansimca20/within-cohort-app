@@ -4,8 +4,10 @@ import { dailyCheckins } from '@/db/schema';
 import { requireMember } from '@/lib/session';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
+import { formatHhMm } from '@/lib/duration';
 import { COHORT_TIMEZONE, getCohortStartDateOrNull } from '@/lib/cohort';
 import { NumberField } from '@/components/NumberField';
+import { DurationField } from '@/components/DurationField';
 import { HooperPicker } from '@/components/HooperPicker';
 import { ClosedNotice } from '@/components/ClosedNotice';
 import { Button } from '@/components/ui/button';
@@ -81,7 +83,9 @@ export default async function CheckinPage({
       <div className="mt-6 flex flex-col gap-6">
         {error && (
           <p role="alert" className="text-sm text-wi-paper">
-            Please fill in every field before saving.
+            {error === 'sleep'
+              ? 'Sleep needs a time like 7:30.'
+              : 'Please fill in every field before saving.'}
           </p>
         )}
 
@@ -114,13 +118,10 @@ export default async function CheckinPage({
                 optional
                 defaultValue={existing?.hrvMs ?? undefined}
               />
-              <NumberField
-                name="sleepHours"
-                label="Sleep (hrs)"
-                min={0}
-                max={16}
-                step={0.1}
-                defaultValue={existing?.sleepHours}
+              <DurationField
+                name="sleep"
+                label="Sleep (h:mm)"
+                defaultValue={existing ? formatHhMm(existing.sleepMinutes) : ''}
               />
             </div>
           </div>

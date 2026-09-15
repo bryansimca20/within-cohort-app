@@ -19,7 +19,7 @@ test('checkinRowsToCsvRows flattens to snake_case columns in the required order'
       recovery: 72,
       restingHr: 48,
       hrvMs: 52,
-      sleepHours: '7.5',
+      sleepMinutes: 450,
       hooperSleep: 3,
       hooperFatigue: 2,
       hooperSoreness: 2,
@@ -37,7 +37,8 @@ test('checkinRowsToCsvRows flattens to snake_case columns in the required order'
     'recovery',
     'resting_hr',
     'hrv_ms',
-    'sleep_hours',
+    'sleep_hhmm',
+    'sleep_minutes',
     'hooper_sleep',
     'hooper_fatigue',
     'hooper_soreness',
@@ -52,7 +53,8 @@ test('checkinRowsToCsvRows flattens to snake_case columns in the required order'
     recovery: 72,
     resting_hr: 48,
     hrv_ms: 52,
-    sleep_hours: '7.5',
+    sleep_hhmm: '7:30',
+    sleep_minutes: 450,
     hooper_sleep: 3,
     hooper_fatigue: 2,
     hooper_soreness: 2,
@@ -71,7 +73,7 @@ test('checkinRowsToCsvRows null note serializes as an empty CSV cell', () => {
       recovery: 72,
       restingHr: 48,
       hrvMs: 52,
-      sleepHours: '7.5',
+      sleepMinutes: 450,
       hooperSleep: 3,
       hooperFatigue: 2,
       hooperSoreness: 2,
@@ -81,10 +83,11 @@ test('checkinRowsToCsvRows null note serializes as an empty CSV cell', () => {
     },
   ]);
   const csv = toCsv(rows);
+  const header = csv.split('\n')[0].split(',');
   const cells = csv.split('\n')[1].split(',');
-  expect(cells[11]).toBe(''); // note column (index 11) is empty
+  expect(cells[header.indexOf('note')]).toBe('');
   expect(csv.split('\n')[0]).toBe(
-    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hours,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
+    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hhmm,sleep_minutes,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
   );
 });
 
@@ -174,9 +177,9 @@ test('fetchCheckinExportRows joins member name and orders by member then date', 
     .returning();
 
   await db.insert(dailyCheckins).values([
-    { memberId: ana.id, localDate: '2026-08-02', phase: 'baseline', recovery: 70, restingHr: 50, sleepHours: '7.0', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1, note: null },
-    { memberId: ana.id, localDate: '2026-08-01', phase: 'baseline', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1, note: 'a note' },
-    { memberId: ben.id, localDate: '2026-08-01', phase: 'baseline', recovery: 65, restingHr: 55, sleepHours: '6.5', hooperSleep: 4, hooperFatigue: 3, hooperSoreness: 3, hooperStress: 2, note: null },
+    { memberId: ana.id, localDate: '2026-08-02', phase: 'baseline', recovery: 70, restingHr: 50, sleepMinutes: 420, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1, note: null },
+    { memberId: ana.id, localDate: '2026-08-01', phase: 'baseline', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1, note: 'a note' },
+    { memberId: ben.id, localDate: '2026-08-01', phase: 'baseline', recovery: 65, restingHr: 55, sleepMinutes: 390, hooperSleep: 4, hooperFatigue: 3, hooperSoreness: 3, hooperStress: 2, note: null },
   ]);
 
   const rows = await fetchCheckinExportRows(db);
@@ -189,7 +192,7 @@ test('fetchCheckinExportRows joins member name and orders by member then date', 
   const csvRows = checkinRowsToCsvRows(rows);
   const csv = toCsv(csvRows);
   expect(csv.split('\n')[0]).toBe(
-    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hours,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
+    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hhmm,sleep_minutes,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
   );
   expect(csv).toContain('Amy,2026-08-01');
 });
@@ -226,7 +229,7 @@ test('checkinRowsToCsvRows null hrv_ms serializes as an empty CSV cell, never a 
       recovery: 72,
       restingHr: 48,
       hrvMs: null,
-      sleepHours: '7.5',
+      sleepMinutes: 450,
       hooperSleep: 3,
       hooperFatigue: 2,
       hooperSoreness: 2,

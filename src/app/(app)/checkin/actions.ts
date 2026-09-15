@@ -6,6 +6,7 @@ import { db as prodDb } from '@/db/client';
 import { dailyCheckins, type Member } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { checkinSchema } from '@/lib/validation';
+import { parseHhMm } from '@/lib/duration';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
 import { COHORT_TIMEZONE, getCohortStartDate } from '@/lib/cohort';
@@ -45,9 +46,7 @@ export async function saveCheckin(db: AnyPgDatabase, member: Member, input: unkn
     // update set, so clearing the field on a same-day edit has to write
     // the null back rather than leave the morning's reading stranded.
     hrvMs: parsed.hrvMs ?? null,
-    // numeric(3,1) columns are string-mode in drizzle: convert so the value
-    // round-trips (parsed.sleepHours is a coerced number, e.g. 7.5).
-    sleepHours: parsed.sleepHours.toString(),
+    sleepMinutes: parsed.sleepMinutes,
     hooperSleep: parsed.hooperSleep,
     hooperFatigue: parsed.hooperFatigue,
     hooperSoreness: parsed.hooperSoreness,
@@ -70,7 +69,7 @@ export async function saveCheckinAction(formData: FormData): Promise<void> {
 
   const recoveryRaw = formData.get('recovery');
   const restingHrRaw = formData.get('restingHr');
-  const sleepHoursRaw = formData.get('sleepHours');
+  const sleepRaw = formData.get('sleep');
   const hooperSleepRaw = formData.get('hooperSleep');
   const hooperFatigueRaw = formData.get('hooperFatigue');
   const hooperSorenessRaw = formData.get('hooperSoreness');
@@ -83,7 +82,7 @@ export async function saveCheckinAction(formData: FormData): Promise<void> {
   if (
     !recoveryRaw ||
     !restingHrRaw ||
-    !sleepHoursRaw ||
+    !sleepRaw ||
     !hooperSleepRaw ||
     !hooperFatigueRaw ||
     !hooperSorenessRaw ||
@@ -99,11 +98,19 @@ export async function saveCheckinAction(formData: FormData): Promise<void> {
   const hrvMsRaw = formData.get('hrvMs');
   const hrvMs = hrvMsRaw !== null && String(hrvMsRaw).trim() !== '' ? hrvMsRaw : undefined;
 
+  // Sleep arrives as the member typed it ('7:30'), so it is parsed here rather
+  // than coerced by the schema: a malformed duration is a different mistake
+  // from a blank field and gets its own message on the form.
+  const sleepMinutes = parseHhMm(String(sleepRaw));
+  if (sleepMinutes === null) {
+    redirect('/checkin?error=sleep');
+  }
+
   const input = {
     recovery: recoveryRaw,
     restingHr: restingHrRaw,
     hrvMs,
-    sleepHours: sleepHoursRaw,
+    sleepMinutes,
     hooperSleep: hooperSleepRaw,
     hooperFatigue: hooperFatigueRaw,
     hooperSoreness: hooperSorenessRaw,

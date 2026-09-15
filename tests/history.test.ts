@@ -10,7 +10,7 @@ function makeCheckin(overrides: Partial<CheckinRow> & { localDate: string }): Ch
     recovery: 72,
     restingHr: 48,
     hrvMs: null,
-    sleepHours: '7.5',
+    sleepMinutes: 450,
     hooperSleep: 3,
     hooperFatigue: 2,
     hooperSoreness: 2,

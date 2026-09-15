@@ -30,7 +30,7 @@ test('checkinDone is false before a checkin exists, true after', async () => {
     phase: 'within',
     recovery: 72,
     restingHr: 48,
-    sleepHours: '7.5',
+    sleepMinutes: 450,
     hooperSleep: 3,
     hooperFatigue: 2,
     hooperSoreness: 2,
@@ -60,10 +60,10 @@ test('streak reflects seeded checkin dates', async () => {
   const m = await seedMember(db);
 
   await db.insert(dailyCheckins).values([
-    { memberId: m.id, localDate: '2026-08-15', phase: 'within', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
-    { memberId: m.id, localDate: '2026-08-14', phase: 'within', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
-    { memberId: m.id, localDate: '2026-08-13', phase: 'within', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
-    { memberId: m.id, localDate: '2026-08-11', phase: 'within', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-15', phase: 'within', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-14', phase: 'within', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-13', phase: 'within', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-11', phase: 'within', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
   ]);
 
   const status = await getTodayStatus(db, m, NOW, START);
@@ -85,11 +85,11 @@ test('baselineLogged and withinLogged count distinct checkin dates per phase', a
   const m = await seedMember(db);
 
   await db.insert(dailyCheckins).values([
-    { memberId: m.id, localDate: '2026-08-01', phase: 'baseline', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
-    { memberId: m.id, localDate: '2026-08-05', phase: 'baseline', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
-    { memberId: m.id, localDate: '2026-08-10', phase: 'baseline', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
-    { memberId: m.id, localDate: '2026-08-15', phase: 'within', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
-    { memberId: m.id, localDate: '2026-08-20', phase: 'within', recovery: 72, restingHr: 48, sleepHours: '7.5', hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-01', phase: 'baseline', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-05', phase: 'baseline', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-10', phase: 'baseline', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-15', phase: 'within', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
+    { memberId: m.id, localDate: '2026-08-20', phase: 'within', recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 },
   ]);
 
   const status = await getTodayStatus(db, m, NOW, START);

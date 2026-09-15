@@ -6,7 +6,9 @@ export const checkinSchema = z.object({
   // Optional: blank must reach here as undefined, never as '' or null,
   // both of which z.coerce.number() would turn into a real 0.
   hrvMs: z.coerce.number().int().min(1).max(300).optional(),
-  sleepHours: z.coerce.number().min(0).max(16),
+  // Whole minutes, parsed from the form's 'h:mm' entry by parseHhMm. 960 is
+  // 16:00, the same implausibility ceiling the old decimal-hours field had.
+  sleepMinutes: z.coerce.number().int().min(0).max(960),
   hooperSleep: z.coerce.number().int().min(1).max(5),
   hooperFatigue: z.coerce.number().int().min(1).max(5),
   hooperSoreness: z.coerce.number().int().min(1).max(5),

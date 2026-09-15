@@ -3,7 +3,7 @@ import { members, dailyCheckins } from '@/db/schema';
 import { saveCheckin } from '@/app/(app)/checkin/actions';
 
 const START = '2026-08-01';
-const valid = { recovery: 72, restingHr: 48, sleepHours: 7.5, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1, note: '' };
+const valid = { recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1, note: '' };
 
 test('creates a checkin stamped baseline on day 0', async () => {
   const { db } = await makeTestDb();
@@ -55,4 +55,14 @@ test('clearing hrvMs on a same-day edit nulls the stored reading', async () => {
   const rows = await db.select().from(dailyCheckins);
   expect(rows).toHaveLength(1);
   expect(rows[0].hrvMs).toBeNull();
+});
+
+// The whole point of the h:mm capture: a duration that is not a whole or half
+// hour has to survive the write unchanged, which decimal hours could not do.
+test('stores an odd sleep duration as exact minutes', async () => {
+  const { db } = await makeTestDb();
+  const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false }).returning();
+  await saveCheckin(db, m, { ...valid, sleepMinutes: 367 }, new Date('2026-08-01T02:00:00Z'), START);
+  const rows = await db.select().from(dailyCheckins);
+  expect(rows[0].sleepMinutes).toBe(367);
 });

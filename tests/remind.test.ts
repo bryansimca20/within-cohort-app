@@ -4,7 +4,7 @@ import { membersNeedingReminder } from '@/lib/reminders';
 import { saveCheckin } from '@/app/(app)/checkin/actions';
 
 const START = '2026-08-01';
-const valid = { recovery: 72, restingHr: 48, sleepHours: 7.5, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 };
+const valid = { recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 };
 
 // 2026-08-15T02:00:00Z -> 09:00 Asia/Jakarta -> localDate 2026-08-15
 const NOW = new Date('2026-08-15T02:00:00Z');

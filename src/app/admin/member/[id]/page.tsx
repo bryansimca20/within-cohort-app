@@ -8,6 +8,7 @@ import { requireAdmin } from '@/lib/session';
 import { groupByDate, formatDate, phaseLabel, sessionTypeLabel } from '@/lib/history';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { formatHhMm } from '@/lib/duration';
 
 // Founder-facing, read-only drilldown into one member's full capture history.
 // No edit/add affordances: this view never writes on a member's behalf.
@@ -82,7 +83,7 @@ export default async function AdminMemberPage({ params }: { params: Promise<{ id
                       <p className="mt-1 text-sm leading-relaxed text-wi-black">
                         Recovery {day.checkin.recovery} · RHR {day.checkin.restingHr}
                         {day.checkin.hrvMs !== null && <> · HRV {day.checkin.hrvMs} ms</>} · Sleep{' '}
-                        {day.checkin.sleepHours}h
+                        {formatHhMm(day.checkin.sleepMinutes)}
                         <br />
                         Hooper: Sleep {day.checkin.hooperSleep}, Fatigue {day.checkin.hooperFatigue}, Soreness{' '}
                         {day.checkin.hooperSoreness}, Stress {day.checkin.hooperStress}

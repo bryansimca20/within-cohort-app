@@ -4,7 +4,7 @@ import { buildDashboard } from '@/lib/dashboard';
 import { saveCheckin } from '@/app/(app)/checkin/actions';
 
 const START = '2026-08-01';
-const valid = { recovery: 72, restingHr: 48, sleepHours: 7.5, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 };
+const valid = { recovery: 72, restingHr: 48, sleepMinutes: 450, hooperSleep: 3, hooperFatigue: 2, hooperSoreness: 2, hooperStress: 1 };
 
 test('flags who is missing today', async () => {
   const { db } = await makeTestDb();

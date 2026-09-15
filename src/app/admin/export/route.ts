@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { formatHhMm } from '@/lib/duration';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { db as prodDb } from '@/db/client';
 import { dailyCheckins, sessionLogs, members } from '@/db/schema';
@@ -32,7 +33,7 @@ type CheckinExportRow = {
   recovery: number;
   restingHr: number;
   hrvMs: number | null;
-  sleepHours: string;
+  sleepMinutes: number;
   hooperSleep: number;
   hooperFatigue: number;
   hooperSoreness: number;
@@ -55,7 +56,7 @@ export async function fetchCheckinExportRows(db: AnyPgDatabase): Promise<Checkin
       recovery: dailyCheckins.recovery,
       restingHr: dailyCheckins.restingHr,
       hrvMs: dailyCheckins.hrvMs,
-      sleepHours: dailyCheckins.sleepHours,
+      sleepMinutes: dailyCheckins.sleepMinutes,
       hooperSleep: dailyCheckins.hooperSleep,
       hooperFatigue: dailyCheckins.hooperFatigue,
       hooperSoreness: dailyCheckins.hooperSoreness,
@@ -81,7 +82,11 @@ export function checkinRowsToCsvRows(rows: CheckinExportRow[]): Record<string, u
     recovery: r.recovery,
     resting_hr: r.restingHr,
     hrv_ms: r.hrvMs,
-    sleep_hours: r.sleepHours,
+    // Both spellings on purpose: sleep_hhmm is how a member entered it and
+    // how a founder reads it, sleep_minutes is what a spreadsheet can do
+    // arithmetic on without parsing a clock string.
+    sleep_hhmm: formatHhMm(r.sleepMinutes),
+    sleep_minutes: r.sleepMinutes,
     hooper_sleep: r.hooperSleep,
     hooper_fatigue: r.hooperFatigue,
     hooper_soreness: r.hooperSoreness,

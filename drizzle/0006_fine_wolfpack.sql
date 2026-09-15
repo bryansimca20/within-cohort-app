@@ -1,0 +1,1 @@
+ALTER TABLE "daily_checkins" DROP COLUMN "sleep_hours";

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Pencil } from 'lucide-react';
+import { formatHhMm } from '@/lib/duration';
 import { sessionTypeLabel, type DayGroup } from '@/lib/history';
 import { cn } from '@/lib/utils';
 import { SessionRowActions } from '@/components/SessionRowActions';
@@ -65,7 +66,7 @@ export function HistoryDayCard({ day, isToday, editable }: { day: DayGroup; isTo
                 <p className="mt-1 text-[13px] text-wi-on-dark-1">
                   Recovery {day.checkin.recovery} · RHR {day.checkin.restingHr}
                   {day.checkin.hrvMs !== null && <> · HRV {day.checkin.hrvMs} ms</>} · Sleep{' '}
-                  {day.checkin.sleepHours}h
+                  {formatHhMm(day.checkin.sleepMinutes)}
                 </p>
                 <p className="mt-0.5 text-[13px] text-wi-on-dark-1">
                   Hooper: Sleep {day.checkin.hooperSleep}, Fatigue {day.checkin.hooperFatigue}, Soreness{' '}

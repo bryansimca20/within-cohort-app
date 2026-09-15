@@ -40,7 +40,15 @@ export const dailyCheckins = pgTable('daily_checkins', {
   // a guessed value is worse than a missing one for the phase-2 analysis.
   // Rows written before this column existed have no value either.
   hrvMs: integer('hrv_ms'),
-  sleepHours: numeric('sleep_hours', { precision: 3, scale: 1 }).notNull(),
+  // Sleep duration as whole minutes. Members enter it as 'h:mm' on the
+  // check-in form, so an integer minute count is the only lossless store:
+  // decimal hours cannot hold 6:07 exactly at any fixed scale a member
+  // would recognise on the way back out.
+  sleepMinutes: integer('sleep_minutes').notNull(),
+  // Sleep duration as whole minutes. Members enter it as 'h:mm' on the
+  // check-in form, so an integer minute count is the only lossless store:
+  // decimal hours cannot hold 6:07 exactly at any fixed scale a member
+  // would recognise on the way back out.
   hooperSleep: integer('hooper_sleep').notNull(),
   hooperFatigue: integer('hooper_fatigue').notNull(),
   hooperSoreness: integer('hooper_soreness').notNull(),
