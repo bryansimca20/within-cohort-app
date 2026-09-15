@@ -2,7 +2,7 @@
 
 - **Date:** 2026-07-23
 - **Status:** Approved design, pre-implementation
-- **Source protocol:** `presentations/2026-07-20-within-cohort-protocol/` (The Cohort Protocol deck)
+- **Source protocol:** `presentations/within-cohort-protocol-2026-07-20/` (The Cohort Protocol deck)
 - **Owner:** Founders
 
 ---
