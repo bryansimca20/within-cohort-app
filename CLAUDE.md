@@ -276,10 +276,15 @@ identical.
   (`baseline` | `within`) computed at write time from the cohort-wide start date
   (the `cohort_config` singleton row, founder-set in Admin; no env fallback. Pages read
   it via `await getCohortStartDateOrNull(db)` and render a "cohort not opened yet" state
-  when it is null). Windows: day 0-13 baseline,
-  14-27 within (each phase is 14 days), `<0` blocked (pre-start), `>=28` read-only (complete). Never recompute a
-  stored row's phase for display — read the stamped value. Pure cores take the start date
-  as an explicit `startDate` param; only the `"use server"` wrapper / page reads the env.
+  when it is null). Windows: day 0-13 baseline (`BASELINE_DAYS` = 14),
+  14-41 within (`WITHIN_DAYS` = 28), `<0` blocked (pre-start), `>=42` read-only (complete):
+  a 6-week protocol, 2 weeks off product then 4 weeks on it. Both lengths are exported
+  from [src/lib/phase.ts](src/lib/phase.ts) and every window, day counter and ledger
+  length derives from them, so a phase length changes there and nowhere else. Use
+  `phaseProgress(state, dayIndex)` for a "day N of M" label rather than re-deriving the
+  offset. Never recompute a stored row's phase for display — read the stamped value.
+  Pure cores take the start date as an explicit `startDate` param; only the
+  `"use server"` wrapper / page reads the env.
 - **Timezone.** The whole cohort is on Jakarta time. All "today" uses the
   `COHORT_TIMEZONE` constant (`Asia/Jakarta`, in [src/lib/cohort.ts](src/lib/cohort.ts))
   via `localDateFor`. `localDate` is that calendar date. Never server-local time, never a

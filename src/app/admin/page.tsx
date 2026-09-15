@@ -3,6 +3,7 @@ import { db } from '@/db/client';
 import { requireAdmin } from '@/lib/session';
 import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { buildDashboard, type DashboardRow } from '@/lib/dashboard';
+import { BASELINE_DAYS, WITHIN_DAYS, phaseProgress } from '@/lib/phase';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,8 +15,14 @@ import { updateCohortStartAction } from './actions';
 
 function phaseLabel(row: DashboardRow): string {
   if (row.phaseState === 'pre') return 'Not started';
-  if (row.phaseState === 'baseline') return `Baseline · Day ${row.dayIndex + 1} / 14`;
-  if (row.phaseState === 'within') return `On Within · Day ${row.dayIndex - 13} / 14`;
+  if (row.phaseState === 'baseline') {
+    const { day, total } = phaseProgress('baseline', row.dayIndex);
+    return `Baseline · Day ${day} / ${total}`;
+  }
+  if (row.phaseState === 'within') {
+    const { day, total } = phaseProgress('within', row.dayIndex);
+    return `On Within · Day ${day} / ${total}`;
+  }
   return 'Complete';
 }
 
@@ -39,7 +46,8 @@ export default async function AdminDashboardPage({
           <div>
             <p className="text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">Cohort start date</p>
             <p className="mt-1 text-sm text-wi-ink-500">
-              Day 0 of the phase calendar, shared by every runner. Baseline is the first 14 days, Within the next 14.
+              Day 0 of the phase calendar, shared by every member. Baseline is the first {BASELINE_DAYS} days, Within the next{' '}
+              {WITHIN_DAYS}.
             </p>
           </div>
           <form action={updateCohortStartAction} className="flex flex-wrap items-end gap-3">

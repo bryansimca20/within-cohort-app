@@ -4,6 +4,10 @@ import { members, sessionLogs } from '@/db/schema';
 import { saveSession, updateSession, deleteSession } from '@/app/(app)/session/actions';
 
 const START = '2026-08-01';
+// Day 42 from START: the first day past the 6-week protocol, when logging
+// locks. Named rather than inlined so the next phase-length change fails these
+// tests loudly instead of quietly moving them inside the active window.
+const AFTER_PROTOCOL = '2026-09-12T02:00:00Z';
 const valid = { sessionType: 'easy', rpe: 5, durationMin: 30, distanceKm: 12.3, note: '' };
 
 type Db = Awaited<ReturnType<typeof makeTestDb>>['db'];
@@ -69,7 +73,7 @@ test('updateSession rejects when the protocol is complete', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
   const created = await seedSession(db, m, new Date('2026-08-15T02:00:00Z')); // within
-  await expect(updateSession(db, m, created.id, { ...valid, rpe: 9 }, new Date('2026-08-29T02:00:00Z'), START)).rejects.toThrow(/complete/i);
+  await expect(updateSession(db, m, created.id, { ...valid, rpe: 9 }, new Date(AFTER_PROTOCOL), START)).rejects.toThrow(/complete/i);
 });
 
 test('deleteSession removes the target row and leaves other sessions', async () => {
@@ -97,7 +101,7 @@ test('deleteSession rejects when the protocol is complete', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
   const created = await seedSession(db, m, new Date('2026-08-15T02:00:00Z'));
-  await expect(deleteSession(db, m, created.id, new Date('2026-08-29T02:00:00Z'), START)).rejects.toThrow(/complete/i);
+  await expect(deleteSession(db, m, created.id, new Date(AFTER_PROTOCOL), START)).rejects.toThrow(/complete/i);
   const rows = await db.select().from(sessionLogs);
   expect(rows).toHaveLength(1);
 });

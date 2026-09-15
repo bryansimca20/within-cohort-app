@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { BASELINE_DAYS, WITHIN_DAYS } from '@/lib/phase';
 
 /** Today skeleton: mirrors the black home layout (greeting, phase counter + streak, the two ledgers, status rows, actions) so the real screen lands with no shift. Viewport-locked like the page itself. */
 export default function TodayLoading() {
@@ -19,15 +20,15 @@ export default function TodayLoading() {
           </div>
         </div>
 
-        {[0, 1].map((ledger) => (
-          <div key={ledger} className="mt-[18px]">
+        {[BASELINE_DAYS, WITHIN_DAYS].map((cells, ledger) => (
+          <div key={ledger} className="mt-3">
             <div className="flex items-center justify-between border-b border-wi-on-dark-line pb-2">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-3 w-24" />
             </div>
-            <div className="mt-[10px] grid grid-cols-7 gap-[6px]">
-              {Array.from({ length: 14 }, (_, i) => (
-                <Skeleton key={i} className="h-[26px] rounded-[3px]" />
+            <div className="mt-[10px] grid grid-cols-14 gap-[4px]">
+              {Array.from({ length: cells }, (_, i) => (
+                <Skeleton key={i} className="h-5 rounded-[3px]" />
               ))}
             </div>
           </div>

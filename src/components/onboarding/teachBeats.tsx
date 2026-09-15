@@ -3,6 +3,7 @@
 import { motion } from 'motion/react';
 import type { ComponentType } from 'react';
 import { cn } from '@/lib/utils';
+import { BASELINE_DAYS, WITHIN_DAYS } from '@/lib/phase';
 
 export type TeachBeatData = {
   key: string;
@@ -14,27 +15,43 @@ export type TeachBeatData = {
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
+// One week per 7 cells, two weeks per row, so a 14-day strip is one row and a
+// 28-day strip is two. Cell width stays identical between the two phases, which
+// is what makes Within read as visibly twice as long as Baseline.
+const CELLS_PER_ROW = 14;
+
 /** Two filling ledger strips, mirroring the Today screen's baseline/within ledgers. */
 function ProtocolVisual() {
-  const strip = (prefix: string, filledCount: number) => (
-    <div className="flex gap-1.5">
-      {Array.from({ length: 14 }, (_, i) => (
-        <motion.span
-          key={`${prefix}-${i}`}
-          initial={{ opacity: 0.25 }}
-          animate={{ opacity: i < filledCount ? 1 : 0.25 }}
-          transition={{ delay: 0.2 + i * 0.04, duration: 0.3 }}
-          className={cn('h-5 flex-1 rounded-[3px]', i < filledCount ? 'bg-wi-paper' : 'bg-wi-on-dark-fill')}
-        />
+  const strip = (prefix: string, days: number) => (
+    <div className="space-y-1.5">
+      {Array.from({ length: Math.ceil(days / CELLS_PER_ROW) }, (_, row) => (
+        <div key={`${prefix}-row-${row}`} className="flex gap-1.5">
+          {Array.from({ length: CELLS_PER_ROW }, (_, col) => {
+            const i = row * CELLS_PER_ROW + col;
+            return (
+              <motion.span
+                key={`${prefix}-${i}`}
+                initial={{ opacity: 0.25 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 + i * 0.025, duration: 0.3 }}
+                className="h-5 flex-1 rounded-[3px] bg-wi-paper"
+              />
+            );
+          })}
+        </div>
       ))}
     </div>
   );
   return (
     <div className="w-full space-y-3">
-      <p className="text-[10px] font-bold tracking-[0.14em] text-wi-on-dark-3 uppercase">Baseline · 14 days</p>
-      {strip('b', 14)}
-      <p className="pt-1 text-[10px] font-bold tracking-[0.14em] text-wi-on-dark-3 uppercase">Within · 14 days</p>
-      {strip('w', 14)}
+      <p className="text-[10px] font-bold tracking-[0.14em] text-wi-on-dark-3 uppercase">
+        Baseline · {BASELINE_DAYS} days
+      </p>
+      {strip('b', BASELINE_DAYS)}
+      <p className="pt-1 text-[10px] font-bold tracking-[0.14em] text-wi-on-dark-3 uppercase">
+        Within · {WITHIN_DAYS} days
+      </p>
+      {strip('w', WITHIN_DAYS)}
     </div>
   );
 }
@@ -135,7 +152,7 @@ export const teachBeats: TeachBeatData[] = [
   {
     key: 'protocol',
     eyebrow: 'The protocol',
-    title: 'Two weeks, then two more',
+    title: 'Two weeks, then four',
     body: 'Baseline first: log as you are, no product. Then Within: one sachet daily. The same signals throughout.',
     Visual: ProtocolVisual,
   },

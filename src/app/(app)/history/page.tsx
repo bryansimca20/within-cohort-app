@@ -7,6 +7,7 @@ import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { LayoutDashboard, LogOut } from 'lucide-react';
 import { getTodayStatus } from '@/lib/today';
 import { groupByDate } from '@/lib/history';
+import { BASELINE_DAYS, WITHIN_DAYS } from '@/lib/phase';
 import { logout } from '@/app/login/actions';
 import { ClosedNotice } from '@/components/ClosedNotice';
 import { HistoryDayCard } from '@/components/HistoryDayCard';
@@ -39,7 +40,7 @@ export default async function HistoryPage() {
 
   const isWithin = status.phaseState === 'within' || status.phaseState === 'complete';
   const logged = isWithin ? status.withinLogged : status.baselineLogged;
-  const total = 14;
+  const total = isWithin ? WITHIN_DAYS : BASELINE_DAYS;
   const pct = total ? Math.round((logged / total) * 100) : 0;
 
   return (

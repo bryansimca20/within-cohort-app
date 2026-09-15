@@ -4,6 +4,7 @@ import { db } from '@/db/client';
 import { requireMember } from '@/lib/session';
 import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { getTodayStatus, type TodayStatus } from '@/lib/today';
+import { BASELINE_DAYS, WITHIN_DAYS, phaseProgress } from '@/lib/phase';
 import { EnablePush } from '@/components/EnablePush';
 import { cn } from '@/lib/utils';
 
@@ -43,18 +44,18 @@ function Ledger({
   checkinDone: boolean;
 }) {
   return (
-    <div className="mt-[18px]">
+    <div className="mt-3">
       <div className="flex items-center justify-between border-b border-wi-on-dark-line pb-2">
         <span className="text-[10px] font-bold tracking-[0.14em] uppercase whitespace-nowrap">{label}</span>
         <span className="text-[10px] font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">
           {logged} / {total} logged
         </span>
       </div>
-      <div className="mt-[10px] grid grid-cols-7 gap-[6px]">
+      <div className="mt-[10px] grid grid-cols-14 gap-[4px]">
         {Array.from({ length: total }, (_, i) => (
           <div
             key={i}
-            className={cn('h-[26px] rounded-[3px]', ledgerCellClass(i, logged, isActivePhase, checkinDone))}
+            className={cn('h-5 rounded-[3px]', ledgerCellClass(i, logged, isActivePhase, checkinDone))}
           />
         ))}
       </div>
@@ -62,10 +63,10 @@ function Ledger({
   );
 }
 
-/** The phase eyebrow + big day counter. Baseline and within are each 14 days. */
+/** The phase eyebrow + big day counter. Baseline runs 14 days, Within 28. */
 function PhaseCounter({ status }: { status: TodayStatus }) {
   const isBaseline = status.phaseState === 'baseline';
-  const dayNumber = isBaseline ? status.dayIndex + 1 : status.dayIndex - 13;
+  const { day, total } = phaseProgress(isBaseline ? 'baseline' : 'within', status.dayIndex);
 
   return (
     <div>
@@ -73,8 +74,8 @@ function PhaseCounter({ status }: { status: TodayStatus }) {
         {isBaseline ? 'Baseline · no product' : 'Within · one sachet daily'}
       </p>
       <div className="mt-1.5 flex items-baseline gap-2">
-        <span className="text-[62px] leading-none font-bold tracking-[-0.045em]">{dayNumber}</span>
-        <span className="text-lg font-bold text-wi-on-dark-3">/ 14</span>
+        <span className="text-[62px] leading-none font-bold tracking-[-0.045em]">{day}</span>
+        <span className="text-lg font-bold text-wi-on-dark-3">/ {total}</span>
       </div>
       <p className="mt-2 text-[10px] font-bold tracking-[0.12em] text-wi-on-dark-2 uppercase">Days into the protocol</p>
     </div>
@@ -94,7 +95,7 @@ function Screen({ children }: { children: React.ReactNode }) {
 
 /** The mockup-style greeting heading. */
 function Welcome({ name }: { name: string }) {
-  return <h1 className="text-[26px] font-bold tracking-[-0.02em] text-wi-paper pt-8">Welcome, {name}</h1>;
+  return <h1 className="text-[26px] font-bold tracking-[-0.02em] text-wi-paper pt-4">Welcome, {name}</h1>;
 }
 
 /** Closed states (before the cohort starts, or after it completes): the greeting over a single calm statement, no empty ledgers or dead buttons. */
@@ -161,7 +162,7 @@ export default async function TodayPage() {
     return (
       <ClosedScreen
         name={name}
-        eyebrow="Four weeks, logged"
+        eyebrow="Six weeks, logged"
         headline="Protocol complete"
         body="Logging is closed and every entry is locked. Your history stays available to review."
         action={
@@ -193,21 +194,21 @@ export default async function TodayPage() {
 
       <Ledger
         label="Baseline"
-        total={14}
+        total={BASELINE_DAYS}
         logged={status.baselineLogged}
         isActivePhase={status.phaseState === 'baseline'}
         checkinDone={status.checkinDone}
       />
       <Ledger
         label="Within"
-        total={14}
+        total={WITHIN_DAYS}
         logged={status.withinLogged}
         isActivePhase={status.phaseState === 'within'}
         checkinDone={status.checkinDone}
       />
 
       <div className="mt-4 border-t border-wi-on-dark-line">
-        <div className="flex items-center gap-3 border-b border-wi-on-dark-line py-3">
+        <div className="flex items-center gap-3 border-b border-wi-on-dark-line py-2.5">
           {status.checkinDone ? (
             <span className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-wi-paper text-wi-black">
               <Check className="size-4" />
@@ -238,7 +239,7 @@ export default async function TodayPage() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3 py-3">
+        <div className="flex items-center gap-3 py-2.5">
           <span className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-wi-on-dark-fill">
             <Activity className="size-4" />
           </span>
@@ -250,7 +251,7 @@ export default async function TodayPage() {
         </div>
       </div>
 
-      <div className="mt-auto flex flex-col gap-[10px] pt-5">
+      <div className="mt-auto flex flex-col gap-[10px] pt-4">
         {/* Discoverable reminder opt-in. Web Push is opt-in per device, and the
             only other entry point is buried at the bottom of History, so runners
             never found it. showWhenOn={false} keeps this a pure nudge: it renders

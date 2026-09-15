@@ -44,7 +44,7 @@ export function WelcomeBeat({ name, onNext }: { name: string; onNext: () => void
           variants={reduce ? undefined : rise}
           className="mt-5 max-w-[22rem] text-sm leading-relaxed text-wi-on-dark-2"
         >
-          For the next four weeks you log one honest signal a day. This is where it lives.
+          For the next six weeks you log one honest signal a day. This is where it lives.
         </motion.p>
       </div>
       <motion.div variants={reduce ? undefined : rise}>
