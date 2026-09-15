@@ -40,23 +40,23 @@ test('updateSession changes metrics but preserves localDate and phase', async ()
   expect(row.phase).toBe('baseline');
 });
 
-test('updateSession forces tookServing null for a baseline row even when editing during within', async () => {
+test('updateSession forces servings null for a baseline row even when editing during within', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
   const created = await seedSession(db, m, new Date('2026-08-01T02:00:00Z')); // baseline
-  await updateSession(db, m, created.id, { ...valid, tookServing: true }, new Date('2026-08-15T02:00:00Z'), START); // now within
+  await updateSession(db, m, created.id, { ...valid, servings: 3 }, new Date('2026-08-15T02:00:00Z'), START); // now within
   const [row] = await db.select().from(sessionLogs).where(eq(sessionLogs.id, created.id));
   expect(row.phase).toBe('baseline');
-  expect(row.tookServing).toBeNull();
+  expect(row.servings).toBeNull();
 });
 
-test('updateSession keeps tookServing for a within row', async () => {
+test('updateSession keeps the serving count for a within row', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
   const created = await seedSession(db, m, new Date('2026-08-15T02:00:00Z')); // within
-  await updateSession(db, m, created.id, { ...valid, tookServing: true }, new Date('2026-08-16T02:00:00Z'), START);
+  await updateSession(db, m, created.id, { ...valid, servings: 3 }, new Date('2026-08-16T02:00:00Z'), START);
   const [row] = await db.select().from(sessionLogs).where(eq(sessionLogs.id, created.id));
-  expect(row.tookServing).toBe(true);
+  expect(row.servings).toBe(3);
 });
 
 test('updateSession rejects a session owned by another member', async () => {

@@ -57,6 +57,20 @@
       "when": 1789492528758,
       "tag": "0007_true_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789506431029,
+      "tag": "0008_black_stephen_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789506440373,
+      "tag": "0009_low_mattie_franklin",
+      "breakpoints": true
     }
   ]
 }

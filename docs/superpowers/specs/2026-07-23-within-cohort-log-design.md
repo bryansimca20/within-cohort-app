@@ -72,18 +72,18 @@ Sourced from the deck. This is what the app must capture, not decide.
 - Hooper index (subjective, 1–5 each): Sleep, Fatigue, Soreness, Stress
 - Optional free-text note
 
-**Post-session log — event-triggered, after any run over ~45 min or a hard effort:**
+**Post-session log — event-triggered, after every session:**
 - Session type (as prescribed)
 - RPE (0–10)
 - Duration (minutes)
 - Distance (km)
-- During the Within phase: whether a serving was taken this session
+- During the Within phase: how many servings were taken this session (0-4)
 - Optional free-text sentence
 
 **Structure:**
 - Weeks 1–2: Baseline. Log all fields on a normal routine, no product.
-- Weeks 3–6: On Within. Same fields, same schedule, one serving per qualifying
-  session.
+- Weeks 3–6: On Within. Same fields, same schedule, servings logged per session (a member may take
+  more than one).
 - All members run in parallel.
 
 **Derived later (NOT entered by the runner, NOT computed in v1):** training load
@@ -196,7 +196,7 @@ same day (see §9 editing policy).
 | rpe | int | 0–10 |
 | duration_min | int | 1–600 |
 | distance_km | numeric(4,1) | 0–100 |
-| took_serving | boolean | meaningful only in the Within phase; null in baseline |
+| servings | integer | count taken this session, 0-4; meaningful only in the Within phase; null in baseline |
 | note | text | optional |
 | created_at | timestamptz | |
 
@@ -269,9 +269,10 @@ over keyboards where possible.
 - Session type selector; if Other, a short text field appears.
 - RPE slider (0–10).
 - Duration (minutes) and distance (km) inputs.
-- `took_serving` toggle — shown only when the member is in the Within phase.
+- `servings`: a "Took a serving" toggle that reveals a 1-4 count when on; shown only
+  when the member is in the Within phase.
 - Optional one-sentence note.
-- Guidance line: "Log after any run over ~45 min or a hard effort."
+- Guidance line: "Log right after, while the numbers are fresh."
 - Submit. Repeatable within a day.
 
 ### 9.4 History

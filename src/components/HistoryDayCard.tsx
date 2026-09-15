@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Pencil } from 'lucide-react';
 import { formatHhMm } from '@/lib/duration';
-import { sessionTypeLabel, type DayGroup } from '@/lib/history';
+import { servingsLabel, sessionTypeLabel, type DayGroup } from '@/lib/history';
 import { cn } from '@/lib/utils';
 import { SessionRowActions } from '@/components/SessionRowActions';
 
@@ -92,7 +92,7 @@ export function HistoryDayCard({ day, isToday, editable }: { day: DayGroup; isTo
               <p className="text-[11px] font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">Session</p>
               <p className="mt-1 text-[13px] text-wi-on-dark-1">
                 {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {s.distanceKm} km
-                {s.tookServing ? ' · serving taken' : ''}
+                {s.servings ? ` · ${servingsLabel(s.servings)}` : ''}
               </p>
               {editable && <SessionRowActions sessionId={s.id} from="history" />}
             </div>

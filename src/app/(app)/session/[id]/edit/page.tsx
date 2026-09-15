@@ -80,7 +80,7 @@ export default async function EditSessionPage({
             rpe: row.rpe,
             durationMin: row.durationMin,
             distanceKm: row.distanceKm,
-            tookServing: row.tookServing,
+            servings: row.servings,
             note: row.note,
           }}
         />

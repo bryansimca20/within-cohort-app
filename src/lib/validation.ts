@@ -21,7 +21,9 @@ export const sessionSchema = z.object({
   rpe: z.coerce.number().int().min(0).max(10),
   durationMin: z.coerce.number().int().min(1).max(600),
   distanceKm: z.coerce.number().min(0).max(100),
-  tookServing: z.boolean().optional(),
+  // Servings taken this session: 0 when the toggle is off, 1-4 when on. Only
+  // meaningful in the within phase; the save cores force null in baseline.
+  servings: z.coerce.number().int().min(0).max(4).optional(),
   note: z.string().max(1000).optional(),
 }).refine((v) => v.sessionType !== 'other' || !!v.sessionTypeOther, { path: ['sessionTypeOther'], message: 'Required' });
 export type CheckinInput = z.infer<typeof checkinSchema>;

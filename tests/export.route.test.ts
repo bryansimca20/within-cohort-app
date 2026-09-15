@@ -102,7 +102,7 @@ test('sessionRowsToCsvRows flattens to snake_case columns in the required order'
       rpe: 5,
       durationMin: 30,
       distanceKm: '12.3',
-      tookServing: null,
+      servings: null,
       note: null,
       createdAt: new Date('2026-08-01T09:00:00.000Z'),
     },
@@ -115,7 +115,7 @@ test('sessionRowsToCsvRows flattens to snake_case columns in the required order'
       rpe: 7,
       durationMin: 45,
       distanceKm: '8.0',
-      tookServing: true,
+      servings: 2,
       note: 'felt strong, cold',
       createdAt: new Date('2026-08-15T09:00:00.000Z'),
     },
@@ -130,16 +130,16 @@ test('sessionRowsToCsvRows flattens to snake_case columns in the required order'
     'rpe',
     'duration_min',
     'distance_km',
-    'took_serving',
+    'servings',
     'note',
     'created_at',
   ]);
-  expect(rows[0].took_serving).toBeNull();
-  expect(rows[1].took_serving).toBe(true);
+  expect(rows[0].servings).toBeNull();
+  expect(rows[1].servings).toBe(2);
   expect(rows[1].note).toBe('felt strong, cold');
 });
 
-test('sessionRowsToCsvRows null took_serving serializes as an empty CSV cell', () => {
+test('sessionRowsToCsvRows null servings serializes as an empty CSV cell', () => {
   const rows = sessionRowsToCsvRows([
     {
       member: 'Ana',
@@ -150,17 +150,18 @@ test('sessionRowsToCsvRows null took_serving serializes as an empty CSV cell', (
       rpe: 5,
       durationMin: 30,
       distanceKm: '12.3',
-      tookServing: null,
+      servings: null,
       note: null,
       createdAt: new Date('2026-08-01T09:00:00.000Z'),
     },
   ]);
   const csv = toCsv(rows);
+  const header = csv.split('\n')[0].split(',');
   const cells = csv.split('\n')[1].split(',');
-  // session_type_other, took_serving, note are all empty for this row
-  expect(cells[4]).toBe(''); // session_type_other
-  expect(cells[8]).toBe(''); // took_serving
-  expect(cells[9]).toBe(''); // note
+  // session_type_other, servings, note are all empty for this row
+  expect(cells[header.indexOf('session_type_other')]).toBe('');
+  expect(cells[header.indexOf('servings')]).toBe('');
+  expect(cells[header.indexOf('note')]).toBe('');
 });
 
 // --- Integration: real join + ordering against pglite. ---------------------
@@ -205,8 +206,8 @@ test('fetchSessionExportRows joins member name and orders by member then date', 
     .returning();
 
   await db.insert(sessionLogs).values([
-    { memberId: m.id, localDate: '2026-08-01', phase: 'baseline', sessionType: 'easy', rpe: 5, durationMin: 30, distanceKm: '12.3', tookServing: null, note: null },
-    { memberId: m.id, localDate: '2026-08-15', phase: 'within', sessionType: 'other', sessionTypeOther: 'Fartlek', rpe: 7, durationMin: 45, distanceKm: '8.0', tookServing: true, note: 'good' },
+    { memberId: m.id, localDate: '2026-08-01', phase: 'baseline', sessionType: 'easy', rpe: 5, durationMin: 30, distanceKm: '12.3', servings: null, note: null },
+    { memberId: m.id, localDate: '2026-08-15', phase: 'within', sessionType: 'other', sessionTypeOther: 'Fartlek', rpe: 7, durationMin: 45, distanceKm: '8.0', servings: 2, note: 'good' },
   ]);
 
   const rows = await fetchSessionExportRows(db);
@@ -215,8 +216,8 @@ test('fetchSessionExportRows joins member name and orders by member then date', 
   expect(rows[1].localDate).toBe('2026-08-15');
 
   const csvRows = sessionRowsToCsvRows(rows);
-  expect(csvRows[0].took_serving).toBeNull();
-  expect(csvRows[1].took_serving).toBe(true);
+  expect(csvRows[0].servings).toBeNull();
+  expect(csvRows[1].servings).toBe(2);
   expect(csvRows[1].session_type_other).toBe('Fartlek');
 });
 

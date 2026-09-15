@@ -1,0 +1,1 @@
+ALTER TABLE "session_logs" DROP COLUMN "took_serving";

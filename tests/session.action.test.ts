@@ -30,24 +30,32 @@ test('phase stamped baseline on day 0 and within on day 14', async () => {
   expect(rows[1].phase).toBe('within');
 });
 
-test('tookServing is forced null in baseline even when input is true, and preserved in within', async () => {
+test('servings is forced null in baseline even when a count is given, and preserved in within', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
-  await saveSession(db, m, { ...valid, tookServing: true }, new Date('2026-08-01T02:00:00Z'), START); // baseline
-  await saveSession(db, m, { ...valid, tookServing: true }, new Date('2026-08-15T02:00:00Z'), START); // within
+  await saveSession(db, m, { ...valid, servings: 2 }, new Date('2026-08-01T02:00:00Z'), START); // baseline
+  await saveSession(db, m, { ...valid, servings: 2 }, new Date('2026-08-15T02:00:00Z'), START); // within
   const rows = await db.select().from(sessionLogs).orderBy(sessionLogs.localDate);
   expect(rows[0].phase).toBe('baseline');
-  expect(rows[0].tookServing).toBeNull();
+  expect(rows[0].servings).toBeNull();
   expect(rows[1].phase).toBe('within');
-  expect(rows[1].tookServing).toBe(true);
+  expect(rows[1].servings).toBe(2);
 });
 
-test('tookServing omitted stores null in within phase too', async () => {
+test('zero servings in within is stored as 0, not collapsed to null', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
-  await saveSession(db, m, valid, new Date('2026-08-15T02:00:00Z'), START); // within, no tookServing given
+  await saveSession(db, m, { ...valid, servings: 0 }, new Date('2026-08-15T02:00:00Z'), START); // within
   const rows = await db.select().from(sessionLogs);
-  expect(rows[0].tookServing).toBeNull();
+  expect(rows[0].servings).toBe(0);
+});
+
+test('servings omitted stores null in within phase too', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+  await saveSession(db, m, valid, new Date('2026-08-15T02:00:00Z'), START); // within, no servings given
+  const rows = await db.select().from(sessionLogs);
+  expect(rows[0].servings).toBeNull();
 });
 
 test('distanceKm round-trips through numeric(4,1)', async () => {

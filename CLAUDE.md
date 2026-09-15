@@ -292,7 +292,7 @@ identical.
 - **Edit policy.** Check-ins are same-local-day editable only. **Sessions** are
   editable and deletable by their owner for the whole protocol window (they lock
   when the protocol completes); a session's `localDate` and stamped `phase` never
-  change on edit, and `tookServing` follows the stored phase (baseline forces null).
+  change on edit, and `servings` follows the stored phase (baseline forces null).
   Deletion is a hard delete. Still no backfill in v1 (a missed day is a visible
   gap, not an invented row).
 - **Auth.** Login is member-name select + a **4-digit passcode** (`generatePasscode` emits
@@ -315,8 +315,10 @@ identical.
   and `''` into `0`, so the action wrapper normalises a blank to `undefined` before
   the schema sees it; never let a skipped reading persist as `0`. Every other check-in
   field stays required.
-- **`took_serving`** is meaningful only in the `within` phase — the core forces it to
-  `null` in baseline regardless of input.
+- **`servings`** is a count, not a yes/no: a member may take more than one serving in
+  a session. It is meaningful only in the `within` phase: the core forces it to `null`
+  in baseline regardless of input. In within, `0` is a real answer (toggle off) and is
+  kept; `null` means not answered (field absent). The form caps it at 4.
 - **First-run onboarding.** `members.onboardedAt` (nullable timestamp) marks first-run
   completion, stamped once via `markOnboarded` at the end of the `/welcome` flow. Null →
   the runner is routed to `/welcome`; set → straight to `/today`. Three gates enforce

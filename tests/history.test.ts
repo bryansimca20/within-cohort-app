@@ -1,4 +1,4 @@
-import { groupByDate, type CheckinRow, type SessionRow } from '@/lib/history';
+import { groupByDate, servingsLabel, type CheckinRow, type SessionRow } from '@/lib/history';
 
 let checkinSeq = 0;
 function makeCheckin(overrides: Partial<CheckinRow> & { localDate: string }): CheckinRow {
@@ -34,7 +34,7 @@ function makeSession(overrides: Partial<SessionRow> & { localDate: string }): Se
     rpe: 4,
     durationMin: 30,
     distanceKm: '5.0',
-    tookServing: null,
+    servings: null,
     note: null,
     createdAt: new Date('2026-08-01T00:00:00Z'),
     ...overrides,
@@ -94,4 +94,19 @@ test('a combined day merges the checkin with all of its sessions, newest first, 
   expect(days).toHaveLength(2);
   expect(days.reduce((n, d) => n + d.sessions.length, 0)).toBe(3);
   expect(days.filter((d) => d.checkin !== null)).toHaveLength(2);
+});
+
+// Readers show a serving count only when there is one: baseline rows are null
+// and a within 0 means none taken, and neither is worth a line of text.
+test('servingsLabel is empty for a baseline null', () => {
+  expect(servingsLabel(null)).toBe('');
+});
+test('servingsLabel is empty when none were taken', () => {
+  expect(servingsLabel(0)).toBe('');
+});
+test('servingsLabel uses the singular for one serving', () => {
+  expect(servingsLabel(1)).toBe('1 serving');
+});
+test('servingsLabel uses the plural for more than one', () => {
+  expect(servingsLabel(3)).toBe('3 servings');
 });

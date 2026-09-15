@@ -57,3 +57,33 @@ test('checkinSchema rejects a sleep duration above 16 hours', () => {
 test('checkinSchema rejects a fractional sleepMinutes', () => {
   expect(checkinSchema.safeParse({ ...baseCheckin, sleepMinutes: 367.5 }).success).toBe(false);
 });
+
+// A member can take more than one serving in a session, so this is a count,
+// not a yes/no. 0 is a real answer (toggle off); 4 is the most the form offers.
+const baseSession = { sessionType: 'easy', rpe: 5, durationMin: 50, distanceKm: 10 };
+
+test('sessionSchema accepts a serving count', () => {
+  const parsed = sessionSchema.safeParse({ ...baseSession, servings: 2 });
+  expect(parsed.success && parsed.data.servings).toBe(2);
+});
+test('sessionSchema accepts zero servings as a real answer', () => {
+  const parsed = sessionSchema.safeParse({ ...baseSession, servings: 0 });
+  expect(parsed.success && parsed.data.servings).toBe(0);
+});
+test('sessionSchema coerces a servings string from FormData', () => {
+  const parsed = sessionSchema.safeParse({ ...baseSession, servings: '3' });
+  expect(parsed.success && parsed.data.servings).toBe(3);
+});
+test('sessionSchema accepts a session with no servings answer', () => {
+  const parsed = sessionSchema.safeParse(baseSession);
+  expect(parsed.success && parsed.data.servings).toBeUndefined();
+});
+test('sessionSchema rejects more than 4 servings', () => {
+  expect(sessionSchema.safeParse({ ...baseSession, servings: 5 }).success).toBe(false);
+});
+test('sessionSchema rejects a negative serving count', () => {
+  expect(sessionSchema.safeParse({ ...baseSession, servings: -1 }).success).toBe(false);
+});
+test('sessionSchema rejects a fractional serving count', () => {
+  expect(sessionSchema.safeParse({ ...baseSession, servings: 1.5 }).success).toBe(false);
+});

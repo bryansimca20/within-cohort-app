@@ -5,7 +5,7 @@ import { ArrowLeftIcon } from 'lucide-react';
 import { db } from '@/db/client';
 import { dailyCheckins, sessionLogs, members } from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
-import { groupByDate, formatDate, phaseLabel, sessionTypeLabel } from '@/lib/history';
+import { groupByDate, formatDate, phaseLabel, servingsLabel, sessionTypeLabel } from '@/lib/history';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatHhMm } from '@/lib/duration';
@@ -106,7 +106,7 @@ export default async function AdminMemberPage({ params }: { params: Promise<{ id
                         {day.sessions.map((s) => (
                           <li key={s.id}>
                             {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {s.distanceKm} km
-                            {s.tookServing ? ' · Took serving' : ''}
+                            {s.servings ? ` · ${servingsLabel(s.servings)}` : ''}
                             {s.note ? ` · ${s.note}` : ''}
                           </li>
                         ))}

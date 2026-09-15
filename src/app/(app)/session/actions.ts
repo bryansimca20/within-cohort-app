@@ -49,9 +49,9 @@ export async function saveSession(db: AnyPgDatabase, member: Member, input: unkn
     // round-trips (parsed.distanceKm is a coerced number, e.g. 12.3).
     distanceKm: parsed.distanceKm.toString(),
     // The serving intervention only exists in the "within" phase: baseline
-    // sessions must never record a serving answer, regardless of what the
-    // form sent.
-    tookServing: state === 'baseline' ? null : (parsed.tookServing ?? null),
+    // sessions must never record a serving count, regardless of what the
+    // form sent. A within 0 is a real answer and is kept.
+    servings: state === 'baseline' ? null : (parsed.servings ?? null),
     note: parsed.note ?? null,
   });
 }
@@ -59,7 +59,7 @@ export async function saveSession(db: AnyPgDatabase, member: Member, input: unkn
 // Pure, testable core: correct an existing session's metrics in place. The
 // row's localDate and stamped phase are immutable (editing fixes data, it
 // never re-homes a row to another day/phase), so this writes only the metric
-// columns. tookServing follows the row's STORED phase, not today's: a baseline
+// columns. servings follows the row's STORED phase, not today's: a baseline
 // session can never record a serving even when edited during the within phase.
 // Rejects a row not owned by `member` and any edit once the protocol is
 // complete; the ownership + window guards live here (not just the UI) because
@@ -89,7 +89,7 @@ export async function updateSession(
       rpe: parsed.rpe,
       durationMin: parsed.durationMin,
       distanceKm: parsed.distanceKm.toString(),
-      tookServing: row.phase === 'baseline' ? null : (parsed.tookServing ?? null),
+      servings: row.phase === 'baseline' ? null : (parsed.servings ?? null),
       note: parsed.note ?? null,
     })
     .where(and(eq(sessionLogs.id, sessionId), eq(sessionLogs.memberId, member.id)));
@@ -117,6 +117,15 @@ export async function deleteSession(
   await db.delete(sessionLogs).where(and(eq(sessionLogs.id, sessionId), eq(sessionLogs.memberId, member.id)));
 }
 
+// FormData gives null when the servings field is absent (the baseline form
+// never renders it, or a direct POST) and '' when blank. z.coerce.number()
+// would turn both into a real 0 servings, so normalise to undefined and let
+// the core store null for "not answered".
+function servingsFromForm(formData: FormData): FormDataEntryValue | undefined {
+  const raw = formData.get('servings');
+  return raw !== null && String(raw).trim() !== '' ? raw : undefined;
+}
+
 export async function saveSessionAction(formData: FormData): Promise<void> {
   const member = await requireMember();
 
@@ -133,16 +142,13 @@ export async function saveSessionAction(formData: FormData): Promise<void> {
     redirect('/session?error=missing');
   }
 
-  // Checkbox inputs post 'on' (default) or an explicit 'true'/'false' value
-  // when checked/unchecked; absence means "not answered" rather than false.
-  const tookServingRaw = formData.get('tookServing');
   const input = {
     sessionType: sessionTypeRaw,
     sessionTypeOther: formData.get('sessionTypeOther') ?? undefined,
     rpe: rpeRaw,
     durationMin: durationMinRaw,
     distanceKm: distanceKmRaw,
-    tookServing: tookServingRaw === null ? undefined : tookServingRaw === 'true' || tookServingRaw === 'on',
+    servings: servingsFromForm(formData),
     note: formData.get('note') ?? undefined,
   };
   await saveSession(prodDb, member, input, new Date(), await getCohortStartDate(prodDb));
@@ -166,14 +172,13 @@ export async function updateSessionAction(sessionId: string, formData: FormData)
     redirect(`/session/${sessionId}/edit?error=missing&from=${from}`);
   }
 
-  const tookServingRaw = formData.get('tookServing');
   const input = {
     sessionType: sessionTypeRaw,
     sessionTypeOther: formData.get('sessionTypeOther') ?? undefined,
     rpe: rpeRaw,
     durationMin: durationMinRaw,
     distanceKm: distanceKmRaw,
-    tookServing: tookServingRaw === null ? undefined : tookServingRaw === 'true' || tookServingRaw === 'on',
+    servings: servingsFromForm(formData),
     note: formData.get('note') ?? undefined,
   };
 

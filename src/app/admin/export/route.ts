@@ -107,7 +107,7 @@ type SessionExportRow = {
   rpe: number;
   durationMin: number;
   distanceKm: string;
-  tookServing: boolean | null;
+  servings: number | null;
   note: string | null;
   createdAt: Date;
 };
@@ -123,7 +123,7 @@ export async function fetchSessionExportRows(db: AnyPgDatabase): Promise<Session
       rpe: sessionLogs.rpe,
       durationMin: sessionLogs.durationMin,
       distanceKm: sessionLogs.distanceKm,
-      tookServing: sessionLogs.tookServing,
+      servings: sessionLogs.servings,
       note: sessionLogs.note,
       createdAt: sessionLogs.createdAt,
     })
@@ -142,7 +142,7 @@ export function sessionRowsToCsvRows(rows: SessionExportRow[]): Record<string, u
     rpe: r.rpe,
     duration_min: r.durationMin,
     distance_km: r.distanceKm,
-    took_serving: r.tookServing,
+    servings: r.servings,
     note: r.note,
     created_at: toIso(r.createdAt),
   }));

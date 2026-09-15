@@ -2,6 +2,7 @@
 
 import { useId, useState } from 'react';
 
+import { PillPicker } from '@/components/PillPicker';
 import { cn } from '@/lib/utils';
 
 type HooperPickerProps = {
@@ -30,31 +31,7 @@ export function HooperPicker({ name, label, anchor, defaultValue = 3, onDark = f
           <span className={cn('text-2xs', onDark ? 'text-wi-on-dark-3' : 'text-wi-ink-500')}>{anchor}</span>
         ) : null}
       </div>
-      <div role="group" aria-labelledby={id} className="flex gap-2">
-        {VALUES.map((n) => {
-          const selected = n === value;
-          return (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setValue(n)}
-              aria-pressed={selected}
-              className={cn(
-                'h-[52px] flex-1 rounded-[8px] border text-[17px] font-bold transition duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.97]',
-                onDark
-                  ? selected
-                    ? 'bg-wi-paper text-wi-black border-wi-paper'
-                    : 'bg-wi-on-dark-fill text-wi-on-dark-2 border-wi-on-dark-line'
-                  : selected
-                    ? 'bg-wi-black text-wi-paper border-wi-black'
-                    : 'bg-wi-paper text-wi-ink-500 border-wi-line'
-              )}
-            >
-              {n}
-            </button>
-          );
-        })}
-      </div>
+      <PillPicker values={VALUES} value={value} onChange={setValue} labelledBy={id} onDark={onDark} />
       <input type="hidden" name={name} value={value} />
     </div>
   );

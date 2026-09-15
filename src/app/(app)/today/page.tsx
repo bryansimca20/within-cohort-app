@@ -245,7 +245,7 @@ export default async function TodayPage() {
           </span>
           <div className="flex-1">
             <p className="text-sm font-semibold">Sessions today</p>
-            <p className="mt-0.5 text-xs text-wi-on-dark-3">Log after a long or hard run</p>
+            <p className="mt-0.5 text-xs text-wi-on-dark-3">Log after every session</p>
           </div>
           <span className="text-base font-bold">{status.sessionCount}</span>
         </div>

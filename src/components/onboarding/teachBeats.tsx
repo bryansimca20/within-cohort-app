@@ -165,9 +165,9 @@ export const teachBeats: TeachBeatData[] = [
   },
   {
     key: 'session',
-    eyebrow: 'After a quality session',
+    eyebrow: 'After every session',
     title: 'Log the session',
-    body: 'Type, effort, duration, distance. Log a long or quality session while the numbers are fresh.',
+    body: 'Type, effort, duration, distance. Log every session while the numbers are fresh.',
     Visual: SessionVisual,
   },
   {

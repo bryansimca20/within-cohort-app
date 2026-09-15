@@ -70,3 +70,9 @@ export function sessionTypeLabel(session: SessionRow): string {
   }
   return SESSION_TYPE_LABELS[session.sessionType];
 }
+
+/** Readout for a session's serving count: '' for a baseline null or a within 0, else '1 serving' / 'N servings'. */
+export function servingsLabel(servings: number | null): string {
+  if (!servings) return '';
+  return servings === 1 ? '1 serving' : `${servings} servings`;
+}

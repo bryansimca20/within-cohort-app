@@ -9,3 +9,8 @@ test('hidden input carries the default then the tapped value', async () => {
   await userEvent.click(screen.getByRole('button', { name: '5' }));
   expect(hidden().value).toBe('5');
 });
+
+test('Hooper pills keep the full 52px size', () => {
+  render(<HooperPicker name="hooperStress" label="Stress" defaultValue={3} />);
+  expect(screen.getByRole('button', { name: '3' }).className).toContain('h-[52px]');
+});

@@ -1,7 +1,7 @@
 import { SESSION_TYPES } from '@/lib/validation';
 import { NumberField } from '@/components/NumberField';
 import { RpeSlider } from '@/components/RpeSlider';
-import { ServingToggleField } from '@/components/ServingToggleField';
+import { ServingsField } from '@/components/ServingsField';
 import { SessionTypeField } from '@/components/SessionTypeField';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,7 @@ type SessionFormExisting = {
   rpe: number;
   durationMin: number;
   distanceKm: string;
-  tookServing: boolean | null;
+  servings: number | null;
   note: string | null;
 };
 
@@ -46,7 +46,7 @@ export function SessionForm({ action, showServingToggle, submitLabel, from = 'hi
       </div>
 
       {showServingToggle && (
-        <ServingToggleField name="tookServing" defaultChecked={existing?.tookServing ?? false} />
+        <ServingsField name="servings" defaultValue={existing?.servings ?? null} />
       )}
 
       <div className="flex flex-col gap-1.5">
@@ -54,7 +54,12 @@ export function SessionForm({ action, showServingToggle, submitLabel, from = 'hi
         <Textarea id="note" name="note" rows={2} defaultValue={existing?.note ?? ''} placeholder="One sentence on how it went." />
       </div>
 
-      <Button type="submit" variant="inverse" size="lg" className="w-full">
+      <Button
+        type="submit"
+        variant="inverse"
+        size="lg"
+        className="h-auto w-full py-5 text-base normal-case tracking-normal"
+      >
         {submitLabel}
       </Button>
     </form>

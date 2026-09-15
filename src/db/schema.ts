@@ -68,7 +68,9 @@ export const sessionLogs = pgTable('session_logs', {
   rpe: integer('rpe').notNull(),
   durationMin: integer('duration_min').notNull(),
   distanceKm: numeric('distance_km', { precision: 4, scale: 1 }).notNull(),
-  tookServing: boolean('took_serving'),
+  // Servings taken this session. Null for baseline rows (no product), 0 when
+  // a within-phase member took none, otherwise the count they took.
+  servings: integer('servings'),
   note: text('note'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
