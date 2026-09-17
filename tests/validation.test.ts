@@ -87,3 +87,30 @@ test('sessionSchema rejects a negative serving count', () => {
 test('sessionSchema rejects a fractional serving count', () => {
   expect(sessionSchema.safeParse({ ...baseSession, servings: 1.5 }).success).toBe(false);
 });
+
+// Distance is the one field a member types free-hand on a keypad whose decimal
+// separator depends on the device region, so the schema owns the normalisation.
+test('sessionSchema accepts a comma as the decimal separator', () => {
+  const parsed = sessionSchema.safeParse({ ...baseSession, distanceKm: '5,25' });
+  expect(parsed.success && parsed.data.distanceKm).toBe(5.25);
+});
+test('sessionSchema accepts a dot as the decimal separator', () => {
+  const parsed = sessionSchema.safeParse({ ...baseSession, distanceKm: '5.25' });
+  expect(parsed.success && parsed.data.distanceKm).toBe(5.25);
+});
+test('sessionSchema accepts two decimal places', () => {
+  const parsed = sessionSchema.safeParse({ ...baseSession, distanceKm: 12.34 });
+  expect(parsed.success && parsed.data.distanceKm).toBe(12.34);
+});
+test('sessionSchema rounds a distance finer than the column scale', () => {
+  const parsed = sessionSchema.safeParse({ ...baseSession, distanceKm: 5.256 });
+  expect(parsed.success && parsed.data.distanceKm).toBe(5.26);
+});
+test('sessionSchema rejects a distance that is not a number', () => {
+  expect(sessionSchema.safeParse({ ...baseSession, distanceKm: 'ten' }).success).toBe(false);
+  expect(sessionSchema.safeParse({ ...baseSession, distanceKm: '' }).success).toBe(false);
+});
+test('sessionSchema still holds the distance range', () => {
+  expect(sessionSchema.safeParse({ ...baseSession, distanceKm: '-1' }).success).toBe(false);
+  expect(sessionSchema.safeParse({ ...baseSession, distanceKm: '100,01' }).success).toBe(false);
+});

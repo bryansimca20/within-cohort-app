@@ -7,6 +7,7 @@ import { db as prodDb } from '@/db/client';
 import { sessionLogs, type Member } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { sessionSchema } from '@/lib/validation';
+import { parseDecimal } from '@/lib/decimal';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
 import { COHORT_TIMEZONE, getCohortStartDate } from '@/lib/cohort';
@@ -45,9 +46,10 @@ export async function saveSession(db: AnyPgDatabase, member: Member, input: unkn
     sessionTypeOther: parsed.sessionTypeOther ?? null,
     rpe: parsed.rpe,
     durationMin: parsed.durationMin,
-    // numeric(4,1) is string-mode in drizzle: convert so the value
-    // round-trips (parsed.distanceKm is a coerced number, e.g. 12.3).
-    distanceKm: parsed.distanceKm.toString(),
+    // numeric(5,2) is string-mode in drizzle. toFixed(2) rather than
+    // toString() so the written string always carries the column's scale
+    // (12.3 -> '12.30'), which is exactly what a read gives back.
+    distanceKm: parsed.distanceKm.toFixed(2),
     // The serving intervention only exists in the "within" phase: baseline
     // sessions must never record a serving count, regardless of what the
     // form sent. A within 0 is a real answer and is kept.
@@ -88,7 +90,7 @@ export async function updateSession(
       sessionTypeOther: parsed.sessionTypeOther ?? null,
       rpe: parsed.rpe,
       durationMin: parsed.durationMin,
-      distanceKm: parsed.distanceKm.toString(),
+      distanceKm: parsed.distanceKm.toFixed(2),
       servings: row.phase === 'baseline' ? null : (parsed.servings ?? null),
       note: parsed.note ?? null,
     })
@@ -142,6 +144,15 @@ export async function saveSessionAction(formData: FormData): Promise<void> {
     redirect('/session?error=missing');
   }
 
+  // Distance is the one free-typed decimal, and the field accepts either
+  // separator, so a comma keypad can leave a bare ',' behind. That clears
+  // `required` and the truthiness guard above but is not a number, and
+  // sessionSchema would throw out of the action into an error page. Catch it
+  // here and send back a message the member can act on instead.
+  if (parseDecimal(String(distanceKmRaw)) === null) {
+    redirect('/session?error=distance');
+  }
+
   const input = {
     sessionType: sessionTypeRaw,
     sessionTypeOther: formData.get('sessionTypeOther') ?? undefined,
@@ -170,6 +181,9 @@ export async function updateSessionAction(sessionId: string, formData: FormData)
   // before z.coerce turns missing fields into valid-looking zeros.
   if (!sessionTypeRaw || !rpeRaw || !durationMinRaw || !distanceKmRaw) {
     redirect(`/session/${sessionId}/edit?error=missing&from=${from}`);
+  }
+  if (parseDecimal(String(distanceKmRaw)) === null) {
+    redirect(`/session/${sessionId}/edit?error=distance&from=${from}`);
   }
 
   const input = {

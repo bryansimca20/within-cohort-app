@@ -9,6 +9,7 @@ import { groupByDate, formatDate, phaseLabel, servingsLabel, sessionTypeLabel } 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatHhMm } from '@/lib/duration';
+import { trimTrailingZeros } from '@/lib/decimal';
 
 // Founder-facing, read-only drilldown into one member's full capture history.
 // No edit/add affordances: this view never writes on a member's behalf.
@@ -105,7 +106,7 @@ export default async function AdminMemberPage({ params }: { params: Promise<{ id
                       <ul className="mt-1 flex flex-col gap-1.5 text-sm text-wi-black">
                         {day.sessions.map((s) => (
                           <li key={s.id}>
-                            {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {s.distanceKm} km
+                            {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {trimTrailingZeros(s.distanceKm)} km
                             {s.servings ? ` · ${servingsLabel(s.servings)}` : ''}
                             {s.note ? ` · ${s.note}` : ''}
                           </li>

@@ -1,9 +1,11 @@
 import { SESSION_TYPES } from '@/lib/validation';
+import { trimTrailingZeros } from '@/lib/decimal';
+import { DecimalField } from '@/components/DecimalField';
 import { NumberField } from '@/components/NumberField';
 import { RpeSlider } from '@/components/RpeSlider';
 import { ServingsField } from '@/components/ServingsField';
 import { SessionTypeField } from '@/components/SessionTypeField';
-import { Button } from '@/components/ui/button';
+import { SubmitButton } from '@/components/SubmitButton';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -21,6 +23,8 @@ type SessionFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   showServingToggle: boolean;
   submitLabel: string;
+  /** Label while the action is in flight. */
+  pendingLabel?: string;
   from?: 'session' | 'history';
   existing?: SessionFormExisting;
 };
@@ -30,7 +34,7 @@ type SessionFormProps = {
  *  every field is prefilled; the serving toggle is shown only for within-phase
  *  sessions (the caller decides via `showServingToggle`). A hidden `from` field
  *  tells the update action where to redirect back to. */
-export function SessionForm({ action, showServingToggle, submitLabel, from = 'history', existing }: SessionFormProps) {
+export function SessionForm({ action, showServingToggle, submitLabel, pendingLabel = 'Saving', from = 'history', existing }: SessionFormProps) {
   return (
     <form action={action} className="flex flex-col gap-5">
       <input type="hidden" name="from" value={from} />
@@ -41,7 +45,12 @@ export function SessionForm({ action, showServingToggle, submitLabel, from = 'hi
           <NumberField name="durationMin" label="Duration (min)" min={1} max={600} step={1} defaultValue={existing?.durationMin} />
         </div>
         <div className="flex-1">
-          <NumberField name="distanceKm" label="Distance (km)" min={0} max={100} step={0.1} defaultValue={existing?.distanceKm} />
+          <DecimalField
+            name="distanceKm"
+            label="Distance (km)"
+            placeholder="5.25"
+            defaultValue={existing ? trimTrailingZeros(existing.distanceKm) : ''}
+          />
         </div>
       </div>
 
@@ -54,14 +63,14 @@ export function SessionForm({ action, showServingToggle, submitLabel, from = 'hi
         <Textarea id="note" name="note" rows={2} defaultValue={existing?.note ?? ''} placeholder="One sentence on how it went." />
       </div>
 
-      <Button
-        type="submit"
+      <SubmitButton
         variant="inverse"
         size="lg"
+        pendingLabel={pendingLabel}
         className="h-auto w-full py-5 text-base normal-case tracking-normal"
       >
         {submitLabel}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

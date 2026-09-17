@@ -1,0 +1,1 @@
+ALTER TABLE "session_logs" ALTER COLUMN "distance_km" SET DATA TYPE numeric(5, 2);

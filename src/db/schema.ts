@@ -67,7 +67,10 @@ export const sessionLogs = pgTable('session_logs', {
   sessionTypeOther: text('session_type_other'),
   rpe: integer('rpe').notNull(),
   durationMin: integer('duration_min').notNull(),
-  distanceKm: numeric('distance_km', { precision: 4, scale: 1 }).notNull(),
+  // Two decimal places, because that is what a running watch reports (5.25 km).
+  // Was numeric(4,1), which silently rounded a member's real distance on write.
+  // Precision 5 / scale 2 holds up to 999.99; the schema caps distance at 100.
+  distanceKm: numeric('distance_km', { precision: 5, scale: 2 }).notNull(),
   // Servings taken this session. Null for baseline rows (no product), 0 when
   // a within-phase member took none, otherwise the count they took.
   servings: integer('servings'),

@@ -65,7 +65,9 @@ export default async function EditSessionPage({
       <div className="mt-6 flex flex-col gap-6">
         {error && (
           <p role="alert" className="text-sm text-wi-paper">
-            Please fill in every field before saving.
+            {error === 'distance'
+              ? 'Distance needs a number like 5.25.'
+              : 'Please fill in every field before saving.'}
           </p>
         )}
 

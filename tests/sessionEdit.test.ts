@@ -35,7 +35,7 @@ test('updateSession changes metrics but preserves localDate and phase', async ()
   expect(row.sessionType).toBe('long');
   expect(row.rpe).toBe(8);
   expect(row.durationMin).toBe(55);
-  expect(row.distanceKm).toBe('20.0');
+  expect(row.distanceKm).toBe('20.00');
   expect(row.localDate).toBe(created.localDate);
   expect(row.phase).toBe('baseline');
 });

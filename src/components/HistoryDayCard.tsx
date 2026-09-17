@@ -7,6 +7,7 @@ import { formatHhMm } from '@/lib/duration';
 import { servingsLabel, sessionTypeLabel, type DayGroup } from '@/lib/history';
 import { cn } from '@/lib/utils';
 import { SessionRowActions } from '@/components/SessionRowActions';
+import { trimTrailingZeros } from '@/lib/decimal';
 
 // Day-number + weekday split for the collapsed row. 'YYYY-MM-DD' is a plain
 // calendar date with no time component, so parsing/formatting stays pinned
@@ -91,7 +92,7 @@ export function HistoryDayCard({ day, isToday, editable }: { day: DayGroup; isTo
             <div key={s.id}>
               <p className="text-[11px] font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">Session</p>
               <p className="mt-1 text-[13px] text-wi-on-dark-1">
-                {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {s.distanceKm} km
+                {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {trimTrailingZeros(s.distanceKm)} km
                 {s.servings ? ` · ${servingsLabel(s.servings)}` : ''}
               </p>
               {editable && <SessionRowActions sessionId={s.id} from="history" />}

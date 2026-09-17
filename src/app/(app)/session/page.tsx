@@ -6,6 +6,7 @@ import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
 import { COHORT_TIMEZONE, getCohortStartDateOrNull } from '@/lib/cohort';
 import { servingsLabel, sessionTypeLabel } from '@/lib/history';
+import { trimTrailingZeros } from '@/lib/decimal';
 import { ClosedNotice } from '@/components/ClosedNotice';
 import { SessionForm } from '@/components/SessionForm';
 import { SessionRowActions } from '@/components/SessionRowActions';
@@ -70,7 +71,7 @@ export default async function SessionPage({
               {todaysSessions.map((s) => (
                 <div key={s.id} className="rounded-lg border border-wi-on-dark-line p-[14px]">
                   <p className="text-[13px] text-wi-on-dark-1">
-                    {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {s.distanceKm} km
+                    {sessionTypeLabel(s)} · RPE {s.rpe} · {s.durationMin} min · {trimTrailingZeros(s.distanceKm)} km
                     {s.servings ? ` · ${servingsLabel(s.servings)}` : ''}
                   </p>
                   <SessionRowActions sessionId={s.id} from="session" />
@@ -88,7 +89,9 @@ export default async function SessionPage({
 
           {error && (
             <p role="alert" className="text-sm text-wi-paper">
-              Please fill in every field before saving.
+              {error === 'distance'
+                ? 'Distance needs a number like 5.25.'
+                : 'Please fill in every field before saving.'}
             </p>
           )}
 

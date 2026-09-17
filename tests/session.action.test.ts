@@ -58,12 +58,32 @@ test('servings omitted stores null in within phase too', async () => {
   expect(rows[0].servings).toBeNull();
 });
 
-test('distanceKm round-trips through numeric(4,1)', async () => {
+test('distanceKm round-trips through numeric(5,2)', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
   await saveSession(db, m, valid, new Date('2026-08-01T02:00:00Z'), START);
   const rows = await db.select().from(sessionLogs);
-  expect(rows[0].distanceKm).toBe('12.3');
+  expect(rows[0].distanceKm).toBe('12.30');
+});
+
+// A watch reports two decimals, and the column used to be numeric(4,1), which
+// rounded the second one away on write.
+test('distanceKm keeps both decimal places a watch reports', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+  await saveSession(db, m, { ...valid, distanceKm: 5.25 }, new Date('2026-08-01T02:00:00Z'), START);
+  const rows = await db.select().from(sessionLogs);
+  expect(rows[0].distanceKm).toBe('5.25');
+});
+
+// The bug that stopped comma-locale members logging accurately: their keypad
+// has no '.' key, so the form posts '5,25'.
+test('distanceKm accepts a comma-separated string from a comma-decimal keypad', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+  await saveSession(db, m, { ...valid, distanceKm: '5,25' }, new Date('2026-08-01T02:00:00Z'), START);
+  const rows = await db.select().from(sessionLogs);
+  expect(rows[0].distanceKm).toBe('5.25');
 });
 
 test('rejects before cohort start', async () => {
@@ -76,4 +96,16 @@ test('rejects sessionType other without sessionTypeOther', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
   await expect(saveSession(db, m, { ...valid, sessionType: 'other' }, new Date('2026-08-01T02:00:00Z'), START)).rejects.toThrow();
+});
+
+// The text distance field accepts either separator, so a comma keypad can
+// leave a bare ',' behind. The action wrapper redirects on it; the core is the
+// backstop for a direct POST, and must reject rather than store a 0.
+test('rejects a distance that is only a separator', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+  await expect(
+    saveSession(db, m, { ...valid, distanceKm: ',' }, new Date('2026-08-01T02:00:00Z'), START)
+  ).rejects.toThrow();
+  expect(await db.select().from(sessionLogs)).toHaveLength(0);
 });
