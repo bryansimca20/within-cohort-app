@@ -14,6 +14,7 @@ import { HistoryDayCard } from '@/components/HistoryDayCard';
 import { InstallCard } from '@/components/InstallCard';
 import { EnablePush } from '@/components/EnablePush';
 import { SendTestPushButton } from '@/components/SendTestPushButton';
+import { BareSubmitButton } from '@/components/SubmitButton';
 
 /** Runner-facing History (black screen): streak + active-phase completion stat cards over a reverse-chronological list of expandable day cards. */
 export default async function HistoryPage() {
@@ -97,13 +98,13 @@ export default async function HistoryPage() {
             </>
           )}
           <form action={logout}>
-            <button
-              type="submit"
+            <BareSubmitButton
+              pendingLabel="Logging out"
               className="flex h-11 w-full items-center justify-center gap-2 rounded-[6px] border border-wi-on-dark-line text-2xs font-bold tracking-[0.1em] text-wi-on-dark-2 uppercase transition-transform duration-[120ms] ease-[var(--wi-ease-standard)] active:scale-[0.98]"
             >
               <LogOut className="size-4" />
               Log out
-            </button>
+            </BareSubmitButton>
           </form>
         </div>
       </div>

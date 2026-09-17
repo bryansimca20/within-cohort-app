@@ -5,7 +5,7 @@ import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { buildDashboard, type DashboardRow } from '@/lib/dashboard';
 import { BASELINE_DAYS, WITHIN_DAYS, phaseProgress } from '@/lib/phase';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { SubmitButton } from '@/components/SubmitButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,7 +62,7 @@ export default async function AdminDashboardPage({
                 className="w-auto"
               />
             </div>
-            <Button type="submit">Save start date</Button>
+            <SubmitButton pendingLabel="Saving">Save start date</SubmitButton>
           </form>
           {startSaved && <p className="text-sm font-medium text-wi-black">Start date saved.</p>}
           {startError && <p role="alert" className="text-sm text-wi-black">Enter a valid date.</p>}

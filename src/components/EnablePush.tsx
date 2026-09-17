@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bell, BellRing } from 'lucide-react';
+import { Bell, BellRing, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -37,6 +37,11 @@ export function EnablePush({
   showWhenOn = true,
 }: { tone?: 'dark' | 'light'; showWhenOn?: boolean } = {}) {
   const [state, setState] = useState<PushState>('checking');
+  // The permission prompt, pushManager.subscribe() and the POST to
+  // /api/push/subscribe are all async and all slow on a phone, and until the
+  // last one lands the button looks untouched. Track it so the control
+  // disables and reads as working instead of inviting a second tap.
+  const [enabling, setEnabling] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,8 +72,9 @@ export function EnablePush({
 
   async function enable() {
     const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!vapidKey) return;
+    if (!vapidKey || enabling) return;
 
+    setEnabling(true);
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
@@ -92,6 +98,8 @@ export function EnablePush({
     } catch {
       // Permission prompts can be dismissed, subscribe() can fail, the
       // network can be down: leave the button as-is so the runner can retry.
+    } finally {
+      setEnabling(false);
     }
   }
 
@@ -125,10 +133,15 @@ export function EnablePush({
       variant="secondary"
       size="sm"
       onClick={enable}
-      className={cn(dark && 'w-full border-wi-on-dark-3 text-wi-paper hover:bg-wi-on-dark-fill hover:text-wi-paper')}
+      disabled={enabling}
+      aria-busy={enabling}
+      className={cn(
+        'disabled:opacity-60',
+        dark && 'w-full border-wi-on-dark-3 text-wi-paper hover:bg-wi-on-dark-fill hover:text-wi-paper'
+      )}
     >
-      <Bell />
-      Turn on reminders
+      {enabling ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Bell />}
+      {enabling ? 'Turning on' : 'Turn on reminders'}
     </Button>
   );
 }

@@ -10,7 +10,7 @@ import { NumberField } from '@/components/NumberField';
 import { DurationField } from '@/components/DurationField';
 import { HooperPicker } from '@/components/HooperPicker';
 import { ClosedNotice } from '@/components/ClosedNotice';
-import { Button } from '@/components/ui/button';
+import { SubmitButton } from '@/components/SubmitButton';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { saveCheckinAction } from './actions';
@@ -172,14 +172,14 @@ export default async function CheckinPage({
             />
           </div>
 
-          <Button
-            type="submit"
+          <SubmitButton
             variant="inverse"
             size="lg"
+            pendingLabel="Saving"
             className="h-auto w-full py-5 text-base normal-case tracking-normal"
           >
             {existing ? 'Update check-in' : 'Save check-in'}
-          </Button>
+          </SubmitButton>
         </form>
       </div>
     </div>

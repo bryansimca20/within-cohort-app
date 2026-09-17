@@ -1,6 +1,6 @@
 'use client';
 import { useActionState, useState } from 'react';
-import { EyeIcon, EyeOffIcon, KeyRoundIcon, UserPlusIcon } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, KeyRoundIcon, LoaderCircle, UserPlusIcon } from 'lucide-react';
 import {
   addMemberAction,
   resetPasscodeAction,
@@ -47,9 +47,9 @@ export function AddMemberForm() {
       </div>
 
       <div>
-        <Button type="submit" disabled={pending} variant="outline" size="sm">
-          <UserPlusIcon />
-          {pending ? 'Adding…' : 'Add member'}
+        <Button type="submit" disabled={pending} aria-busy={pending} variant="outline" size="sm">
+          {pending ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <UserPlusIcon />}
+          {pending ? 'Adding' : 'Add member'}
         </Button>
       </div>
 
@@ -98,9 +98,9 @@ export function PasscodeCell({ memberId, name }: { memberId: string; name: strin
         ) : (
           <form action={revealAction} onSubmit={() => setHidden(false)}>
             <input type="hidden" name="memberId" value={memberId} />
-            <Button type="submit" disabled={revealing} variant="outline" size="sm">
-              <EyeIcon />
-              {revealing ? 'Showing…' : 'Show passcode'}
+            <Button type="submit" disabled={revealing} aria-busy={revealing} variant="outline" size="sm">
+              {revealing ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <EyeIcon />}
+              {revealing ? 'Showing' : 'Show passcode'}
             </Button>
           </form>
         )}
@@ -108,9 +108,9 @@ export function PasscodeCell({ memberId, name }: { memberId: string; name: strin
         <form action={resetAction}>
           <input type="hidden" name="memberId" value={memberId} />
           <input type="hidden" name="name" value={name} />
-          <Button type="submit" disabled={resetting} variant="outline" size="sm">
-            <KeyRoundIcon />
-            {resetting ? 'Resetting…' : 'Reset'}
+          <Button type="submit" disabled={resetting} aria-busy={resetting} variant="outline" size="sm">
+            {resetting ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <KeyRoundIcon />}
+            {resetting ? 'Resetting' : 'Reset'}
           </Button>
         </form>
       </div>

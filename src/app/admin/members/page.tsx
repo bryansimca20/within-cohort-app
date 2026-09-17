@@ -4,7 +4,7 @@ import { members } from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
 import { updateMemberAction } from './actions';
 import { AddMemberForm, PasscodeCell } from './MemberForms';
-import { Button } from '@/components/ui/button';
+import { SubmitButton } from '@/components/SubmitButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -73,9 +73,9 @@ export default async function AdminMembersPage() {
                         <Checkbox name="isAdmin" defaultChecked={m.isAdmin} />
                         Admin
                       </label>
-                      <Button type="submit" variant="outline" size="sm" className="mb-1">
+                      <SubmitButton variant="outline" size="sm" pendingLabel="Saving" className="mb-1">
                         Save
-                      </Button>
+                      </SubmitButton>
                     </form>
                   </TableCell>
                   <TableCell className="align-top whitespace-normal">
