@@ -144,6 +144,13 @@ scripts/                   # seed.ts, gen-icons.mjs
   A server action is reachable by direct POST — never trust the form did the checking.
 - Query only via Drizzle method chains. Never do reflective access (`{...db}`,
   `instanceof`, property enumeration) on the `db` Proxy — it implements only a `get` trap.
+- **Every server-action form gets a pending state.** Use `SubmitButton` /
+  `BareSubmitButton` ([src/components/SubmitButton.tsx](src/components/SubmitButton.tsx)),
+  never a bare `<Button type="submit">`: they read `useFormStatus`, so they disable and
+  swap in a spinner while the action is in flight. This is not cosmetic. `session_logs`
+  has no unique constraint, so an impatient second tap on a slow phone connection writes
+  the row twice. A non-form async control (a `fetch`, a `useTransition` action) owns the
+  same state itself — see `EnablePush` and `SendTestPushButton`.
 
 **Comments**
 - One `/** ... */` line above each exported function/component describing purpose, not
@@ -246,6 +253,17 @@ identical.
 
 - Built for one-handed phone use at 7 a.m.: large tap targets, minimal typing, sliders
   over keyboards.
+- **Never `<input type="number">` for a decimal.** iOS builds the numeric keypad from the
+  device *region*, so members in comma-decimal locales get a ',' key and no '.' key, and a
+  native number input silently discards a value it cannot parse — the field looks filled
+  and the server receives `''`. `step` also rejects any extra decimal place. Decimal entry
+  is `DecimalField` (masked `type="text"` + `inputMode="decimal"`, either separator);
+  `src/lib/decimal.ts` owns the mask/parse round trip and the schema normalises ',' to '.'.
+  `NumberField` stays correct for integers only.
+- **Installed as a home-screen app the web view runs edge to edge** (root layout sets
+  `viewportFit: 'cover'` + a translucent status bar). Any layout that owns a top or bottom
+  edge must pad itself with `env(safe-area-inset-top/bottom)`, or its header renders under
+  the iOS clock and battery.
 
 ## Testing
 
