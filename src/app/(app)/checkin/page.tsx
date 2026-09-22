@@ -4,25 +4,11 @@ import { dailyCheckins } from '@/db/schema';
 import { requireMember } from '@/lib/session';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
-import { formatHhMm } from '@/lib/duration';
 import { COHORT_TIMEZONE, getCohortStartDateOrNull } from '@/lib/cohort';
-import { NumberField } from '@/components/NumberField';
-import { DurationField } from '@/components/DurationField';
-import { HooperPicker } from '@/components/HooperPicker';
+import { shortDate } from '@/lib/dayLabel';
 import { ClosedNotice } from '@/components/ClosedNotice';
-import { SubmitButton } from '@/components/SubmitButton';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { CheckinForm } from '@/components/CheckinForm';
 import { saveCheckinAction } from './actions';
-
-/** Short "Jul 28" label for the header sub-line, pinned to UTC so a negative-offset server timezone can't roll the plain 'YYYY-MM-DD' date back a day. */
-function formatDateLabel(dateISO: string): string {
-  return new Date(dateISO).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
-}
 
 /** Header sub-line phase word; only 'baseline'/'within' ever reach here, since 'pre'/'complete' return earlier. */
 function checkinPhaseLabel(phase: 'baseline' | 'within'): string {
@@ -77,7 +63,7 @@ export default async function CheckinPage({
         <span className="text-2xs font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">~20s</span>
       </div>
       <p className="mt-1 text-xs text-wi-on-dark-2">
-        {formatDateLabel(localDate)} · {checkinPhaseLabel(state)}
+        {shortDate(localDate)} · {checkinPhaseLabel(state)}
       </p>
 
       <div className="mt-6 flex flex-col gap-6">
@@ -89,98 +75,7 @@ export default async function CheckinPage({
           </p>
         )}
 
-        <form action={saveCheckinAction} className="flex flex-col gap-6">
-          <div className="flex flex-col gap-3">
-            <Label>From your watch</Label>
-            <NumberField
-              name="recovery"
-              label="Recovery score (0-100)"
-              min={0}
-              max={100}
-              step={1}
-              defaultValue={existing?.recovery}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <NumberField
-                name="restingHr"
-                label="Resting HR (bpm)"
-                min={25}
-                max={120}
-                step={1}
-                defaultValue={existing?.restingHr}
-              />
-              <NumberField
-                name="hrvMs"
-                label="HRV (ms)"
-                min={1}
-                max={300}
-                step={1}
-                optional
-                defaultValue={existing?.hrvMs ?? undefined}
-              />
-              <DurationField
-                name="sleep"
-                label="Sleep (h:mm)"
-                defaultValue={existing ? formatHhMm(existing.sleepMinutes) : ''}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex items-baseline justify-between">
-              <Label>How you feel</Label>
-              <span className="text-2xs text-wi-on-dark-3">1 low · 5 high</span>
-            </div>
-            <HooperPicker
-              onDark
-              name="hooperSleep"
-              label="Sleep quality"
-              anchor="poor → great"
-              defaultValue={existing?.hooperSleep ?? 3}
-            />
-            <HooperPicker
-              onDark
-              name="hooperFatigue"
-              label="Fatigue"
-              anchor="fresh → wrecked"
-              defaultValue={existing?.hooperFatigue ?? 3}
-            />
-            <HooperPicker
-              onDark
-              name="hooperSoreness"
-              label="Soreness"
-              anchor="none → severe"
-              defaultValue={existing?.hooperSoreness ?? 3}
-            />
-            <HooperPicker
-              onDark
-              name="hooperStress"
-              label="Stress"
-              anchor="calm → tense"
-              defaultValue={existing?.hooperStress ?? 3}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="note">Note (optional)</Label>
-            <Textarea
-              id="note"
-              name="note"
-              rows={2}
-              defaultValue={existing?.note ?? ''}
-              placeholder="Anything worth remembering about today."
-            />
-          </div>
-
-          <SubmitButton
-            variant="inverse"
-            size="lg"
-            pendingLabel="Saving"
-            className="h-auto w-full py-5 text-base normal-case tracking-normal"
-          >
-            {existing ? 'Update check-in' : 'Save check-in'}
-          </SubmitButton>
-        </form>
+        <CheckinForm action={saveCheckinAction.bind(null, localDate)} existing={existing} />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { makeTestDb } from './helpers/testDb';
 import { members, dailyCheckins } from '@/db/schema';
+import { isLateEntry } from '@/lib/history';
 import { saveCheckin } from '@/app/(app)/checkin/actions';
 
 const START = '2026-08-01';
@@ -65,4 +66,84 @@ test('stores an odd sleep duration as exact minutes', async () => {
   await saveCheckin(db, m, { ...valid, sleepMinutes: 367 }, new Date('2026-08-01T02:00:00Z'), START);
   const rows = await db.select().from(dailyCheckins);
   expect(rows[0].sleepMinutes).toBe(367);
+});
+
+// --- backfill ------------------------------------------------------------
+// A missed morning is recoverable from the watch long after the fact, so any
+// protocol day is loggable until the window closes. The date is explicit; the
+// clock only says when the write happened.
+
+// The load-bearing rule of the whole feature: a baseline day filled in during
+// the within phase must stamp baseline, or the comparison the protocol exists
+// to produce is contaminated.
+test('backfills onto an earlier day and stamps that day\'s phase, not today\'s', async () => {
+  const { db } = await makeTestDb();
+  const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false }).returning();
+  // now is 2026-08-20 Jakarta (day 19, within); the target is day 4, baseline
+  await saveCheckin(db, m, valid, new Date('2026-08-20T02:00:00Z'), START, '2026-08-05');
+  const rows = await db.select().from(dailyCheckins);
+  expect(rows).toHaveLength(1);
+  expect(rows[0].localDate).toBe('2026-08-05');
+  expect(rows[0].phase).toBe('baseline');
+});
+
+test('records the real write instant on a backfilled row, not the day it describes', async () => {
+  const { db } = await makeTestDb();
+  const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false }).returning();
+  await saveCheckin(db, m, valid, new Date('2026-08-20T02:00:00Z'), START, '2026-08-05');
+  const rows = await db.select().from(dailyCheckins);
+  // createdAt is the database clock, so it is genuinely "now" here. The row is
+  // late because its localDate is the backfilled day, not because of the stamp.
+  expect(rows[0].localDate).toBe('2026-08-05');
+  expect(Date.now() - rows[0].createdAt.getTime()).toBeLessThan(60_000);
+  expect(isLateEntry(rows[0].localDate, rows[0].createdAt)).toBe(true);
+});
+
+// Editing a past log is the same code path as creating one, so the upsert must
+// correct the values without rewriting the row's provenance.
+test('editing a past check-in updates in place and preserves the original createdAt', async () => {
+  const { db } = await makeTestDb();
+  const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false }).returning();
+  await saveCheckin(db, m, valid, new Date('2026-08-20T02:00:00Z'), START, '2026-08-05');
+  const [first] = await db.select().from(dailyCheckins);
+
+  await saveCheckin(db, m, { ...valid, recovery: 91 }, new Date('2026-08-22T02:00:00Z'), START, '2026-08-05');
+
+  const rows = await db.select().from(dailyCheckins);
+  expect(rows).toHaveLength(1);
+  expect(rows[0].recovery).toBe(91);
+  expect(rows[0].createdAt.getTime()).toBe(first.createdAt.getTime());
+});
+
+test('rejects a target date that has not happened yet', async () => {
+  const { db } = await makeTestDb();
+  const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false }).returning();
+  await expect(
+    saveCheckin(db, m, valid, new Date('2026-08-20T02:00:00Z'), START, '2026-08-21'),
+  ).rejects.toThrow(/has not happened/i);
+});
+
+test('rejects a target date before the cohort start', async () => {
+  const { db } = await makeTestDb();
+  const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false }).returning();
+  await expect(
+    saveCheckin(db, m, valid, new Date('2026-08-20T02:00:00Z'), START, '2026-07-30'),
+  ).rejects.toThrow(/not started/i);
+});
+
+test('rejects a malformed target date before it reaches a query', async () => {
+  const { db } = await makeTestDb();
+  const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false }).returning();
+  await expect(
+    saveCheckin(db, m, valid, new Date('2026-08-20T02:00:00Z'), START, '05-08-2026'),
+  ).rejects.toThrow(/YYYY-MM-DD/);
+});
+
+// The end of the window is not a deadline extension: unfilled gaps freeze.
+test('rejects a backfill once the protocol is complete', async () => {
+  const { db } = await makeTestDb();
+  const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false }).returning();
+  await expect(
+    saveCheckin(db, m, valid, new Date('2026-09-20T02:00:00Z'), START, '2026-08-05'),
+  ).rejects.toThrow(/complete/i);
 });

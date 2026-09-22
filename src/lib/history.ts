@@ -1,4 +1,8 @@
+import { addDays, format, parseISO } from 'date-fns';
 import { dailyCheckins, sessionLogs } from '@/db/schema';
+import { BASELINE_DAYS, WITHIN_DAYS } from '@/lib/phase';
+import { daysBetween, localDateFor } from '@/lib/dates';
+import { COHORT_TIMEZONE } from '@/lib/cohort';
 
 export type CheckinRow = typeof dailyCheckins.$inferSelect;
 export type SessionRow = typeof sessionLogs.$inferSelect;
@@ -35,6 +39,54 @@ export function groupByDate(checkins: CheckinRow[], sessions: SessionRow[]): Day
   }
 
   return Array.from(map.values()).sort((a, b) => (a.localDate < b.localDate ? 1 : a.localDate > b.localDate ? -1 : 0));
+}
+
+export type LedgerDay = DayGroup & { logged: boolean };
+
+/** The last day index inside the protocol window, so the ledger freezes when it completes. */
+const LAST_PROTOCOL_DAY = BASELINE_DAYS + WITHIN_DAYS - 1;
+
+/**
+ * Every protocol day from the cohort start through today, newest first, with
+ * the member's grouped rows merged in. A day with no rows still appears, so a
+ * missed morning renders as a row with a log affordance rather than an absence
+ * the member has to notice for themselves. Stops at the last protocol day: once
+ * the window completes the ledger freezes and unfilled gaps stay gaps.
+ */
+export function buildLedger(startDate: string, todayISO: string, groups: DayGroup[]): LedgerDay[] {
+  const byDate = new Map(groups.map((g) => [g.localDate, g]));
+  const lastIndex = Math.min(daysBetween(startDate, todayISO), LAST_PROTOCOL_DAY);
+  const start = parseISO(startDate);
+
+  const days: LedgerDay[] = [];
+  for (let i = lastIndex; i >= 0; i--) {
+    const localDate = format(addDays(start, i), 'yyyy-MM-dd');
+    const group = byDate.get(localDate);
+    days.push(
+      group
+        ? { ...group, logged: true }
+        : {
+            localDate,
+            // An unlogged day has no stamped phase to read, so it comes from
+            // the day index. A logged day always keeps its stamped value.
+            phase: i < BASELINE_DAYS ? 'baseline' : 'within',
+            checkin: null,
+            sessions: [],
+            logged: false,
+          },
+    );
+  }
+  return days;
+}
+
+/**
+ * True when the row was written on a later Jakarta day than the day it
+ * describes. Provenance for phase 2: a reading recalled days later is not the
+ * same evidence as one taken at 7 a.m. The write instant has to be resolved in
+ * Jakarta first, since 23:30 UTC is already the next morning there.
+ */
+export function isLateEntry(localDate: string, createdAt: Date): boolean {
+  return localDateFor(COHORT_TIMEZONE, createdAt) > localDate;
 }
 
 // 'YYYY-MM-DD' is a plain calendar date with no time component; parsing it

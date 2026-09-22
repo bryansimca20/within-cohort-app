@@ -2,23 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Pencil } from 'lucide-react';
+import { ChevronRight, Pencil, Plus } from 'lucide-react';
 import { formatHhMm } from '@/lib/duration';
-import { servingsLabel, sessionTypeLabel, type DayGroup } from '@/lib/history';
+import { isLateEntry, servingsLabel, sessionTypeLabel, type DayGroup } from '@/lib/history';
 import { cn } from '@/lib/utils';
+import { splitLocalDate } from '@/lib/dayLabel';
 import { SessionRowActions } from '@/components/SessionRowActions';
 import { trimTrailingZeros } from '@/lib/decimal';
-
-// Day-number + weekday split for the collapsed row. 'YYYY-MM-DD' is a plain
-// calendar date with no time component, so parsing/formatting stays pinned
-// to UTC end to end, same as formatDate in lib/history.
-function splitLocalDate(dateISO: string): { dayNum: string; weekday: string } {
-  const date = new Date(dateISO);
-  return {
-    dayNum: date.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' }),
-    weekday: date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
-  };
-}
 
 /** One expandable History row, styled for the black History screen: collapsed shows the date, phase tag, and session count; expanded reveals check-in, Hooper, and per-session detail, plus an edit link when it's today's entry. */
 export function HistoryDayCard({ day, isToday, editable }: { day: DayGroup; isToday: boolean; editable: boolean }) {
@@ -61,7 +51,12 @@ export function HistoryDayCard({ day, isToday, editable }: { day: DayGroup; isTo
       {expanded && (
         <div className="flex flex-col gap-3 border-t border-wi-on-dark-line px-[14px] pt-3 pb-[14px] pl-[69px] animate-wi-expand">
           <div>
-            <p className="text-[11px] font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">Check-in</p>
+            <p className="text-[11px] font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">
+              Check-in
+              {day.checkin && isLateEntry(day.localDate, day.checkin.createdAt) && (
+                <span className="ml-2 font-bold text-wi-on-dark-3 normal-case">logged late</span>
+              )}
+            </p>
             {day.checkin ? (
               <>
                 <p className="mt-1 text-[13px] text-wi-on-dark-1">
@@ -77,13 +72,13 @@ export function HistoryDayCard({ day, isToday, editable }: { day: DayGroup; isTo
             ) : (
               <p className="mt-1 text-[13px] text-wi-on-dark-3">No check-in</p>
             )}
-            {isToday && day.checkin && (
+            {editable && (
               <Link
-                href="/checkin"
+                href={isToday ? '/checkin' : `/day/${day.localDate}/checkin`}
                 className="mt-1.5 inline-flex items-center gap-1 self-start text-[11px] font-bold tracking-[0.06em] text-wi-paper uppercase"
               >
-                <Pencil className="size-3" />
-                Edit
+                {day.checkin ? <Pencil className="size-3" /> : <Plus className="size-3" />}
+                {day.checkin ? 'Edit check-in' : 'Add check-in'}
               </Link>
             )}
           </div>
@@ -98,6 +93,19 @@ export function HistoryDayCard({ day, isToday, editable }: { day: DayGroup; isTo
               {editable && <SessionRowActions sessionId={s.id} from="history" />}
             </div>
           ))}
+
+          {/* A day that was checked into but never had its session logged is the
+              case this affordance exists for: without a labelled link, the only
+              way in was the check-in's Edit link, which reads as the wrong door. */}
+          {editable && (
+            <Link
+              href={isToday ? '/session' : `/day/${day.localDate}/session`}
+              className="inline-flex items-center gap-1 self-start text-[11px] font-bold tracking-[0.06em] text-wi-paper uppercase"
+            >
+              <Plus className="size-3" />
+              Add session
+            </Link>
+          )}
         </div>
       )}
     </div>

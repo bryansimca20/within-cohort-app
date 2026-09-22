@@ -6,14 +6,11 @@ import { requireMember } from '@/lib/session';
 import { getPhase } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
 import { COHORT_TIMEZONE, getCohortStartDateOrNull } from '@/lib/cohort';
+import { shortDate } from '@/lib/dayLabel';
+import { asReturnTo } from '@/lib/returnTo';
 import { ClosedNotice } from '@/components/ClosedNotice';
 import { SessionForm } from '@/components/SessionForm';
 import { updateSessionAction } from '../../actions';
-
-/** Short "Jul 28" label, pinned to UTC so a negative-offset server timezone can't roll a plain 'YYYY-MM-DD' back a day. */
-function formatDateLabel(dateISO: string): string {
-  return new Date(dateISO).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-}
 
 /** Edit one of the runner's own sessions. Ownership + protocol-window gated; the
  *  row's date and phase are shown read-only in the header and never change on save. */
@@ -53,13 +50,14 @@ export default async function EditSessionPage({
     .where(and(eq(sessionLogs.id, id), eq(sessionLogs.memberId, member.id)));
   if (!row) notFound();
 
-  const backTo: 'session' | 'history' = from === 'session' ? 'session' : 'history';
+  // The origin rides in the query string, so it is normalised rather than trusted.
+  const backTo = asReturnTo(from);
 
   return (
     <div className="mx-auto w-full max-w-md px-[22px] pt-2 pb-6" data-surface="dark">
       <h1 className="text-h2 font-bold tracking-[-0.02em] uppercase">Edit session</h1>
       <p className="mt-1 text-xs text-wi-on-dark-2">
-        {formatDateLabel(row.localDate)} · {row.phase === 'within' ? 'Within' : 'Baseline'}
+        {shortDate(row.localDate)} · {row.phase === 'within' ? 'Within' : 'Baseline'}
       </p>
 
       <div className="mt-6 flex flex-col gap-6">

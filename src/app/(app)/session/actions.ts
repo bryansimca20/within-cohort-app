@@ -9,9 +9,11 @@ import type * as schema from '@/db/schema';
 import { sessionSchema } from '@/lib/validation';
 import { parseDecimal } from '@/lib/decimal';
 import { getPhase } from '@/lib/phase';
+import { assertLoggableDate } from '@/lib/logDate';
 import { localDateFor } from '@/lib/dates';
 import { COHORT_TIMEZONE, getCohortStartDate } from '@/lib/cohort';
 import { requireMember } from '@/lib/session';
+import { returnToPath } from '@/lib/returnTo';
 
 type Schema = typeof schema;
 // Any drizzle Postgres-family driver (postgres-js in prod, pglite in tests)
@@ -26,22 +28,26 @@ type AnyPgDatabase = PgDatabase<PgQueryResultHKT, Schema>;
 // are allowed (no unique constraint), so this always inserts and never
 // upserts. No cookies, no redirects; those live in `saveSessionAction` below
 // so this stays trivial to exercise against the pglite test harness.
-export async function saveSession(db: AnyPgDatabase, member: Member, input: unknown, now: Date, startDate: string): Promise<void> {
+//
+// `targetDate` is the day being logged and defaults to today. Passing an
+// earlier day records a session trained on a day the member never logged; the
+// row lands on the day it happened and takes that day's phase, so a baseline
+// session added during the within phase can never carry a serving count.
+export async function saveSession(
+  db: AnyPgDatabase,
+  member: Member,
+  input: unknown,
+  now: Date,
+  startDate: string,
+  targetDate: string = localDateFor(COHORT_TIMEZONE, now),
+): Promise<void> {
   const parsed = sessionSchema.parse(input);
-  const localDate = localDateFor(COHORT_TIMEZONE, now);
-
-  const { state } = getPhase(startDate, localDate);
-  if (state === 'pre') {
-    throw new Error('Cohort has not started yet');
-  }
-  if (state === 'complete') {
-    throw new Error('Protocol complete: sessions are closed');
-  }
+  const { localDate, phase } = assertLoggableDate(targetDate, now, startDate, 'sessions');
 
   await db.insert(sessionLogs).values({
     memberId: member.id,
     localDate,
-    phase: state,
+    phase,
     sessionType: parsed.sessionType,
     sessionTypeOther: parsed.sessionTypeOther ?? null,
     rpe: parsed.rpe,
@@ -53,7 +59,7 @@ export async function saveSession(db: AnyPgDatabase, member: Member, input: unkn
     // The serving intervention only exists in the "within" phase: baseline
     // sessions must never record a serving count, regardless of what the
     // form sent. A within 0 is a real answer and is kept.
-    servings: state === 'baseline' ? null : (parsed.servings ?? null),
+    servings: phase === 'baseline' ? null : (parsed.servings ?? null),
     note: parsed.note ?? null,
   });
 }
@@ -128,8 +134,12 @@ function servingsFromForm(formData: FormData): FormDataEntryValue | undefined {
   return raw !== null && String(raw).trim() !== '' ? raw : undefined;
 }
 
-export async function saveSessionAction(formData: FormData): Promise<void> {
+/** Server-action wrapper: log a session on `targetDate` for the caller. The date
+ *  is a bound argument, not a form field, and the core re-validates it anyway. */
+export async function saveSessionAction(targetDate: string, formData: FormData): Promise<void> {
   const member = await requireMember();
+  const from = String(formData.get('from') ?? 'session');
+  const backTo = returnToPath(from);
 
   const sessionTypeRaw = formData.get('sessionType');
   const rpeRaw = formData.get('rpe');
@@ -141,7 +151,7 @@ export async function saveSessionAction(formData: FormData): Promise<void> {
   // submission would otherwise coerce into valid-looking zeros instead of
   // failing. Reject those up front rather than letting them coerce.
   if (!sessionTypeRaw || !rpeRaw || !durationMinRaw || !distanceKmRaw) {
-    redirect('/session?error=missing');
+    redirect(`${backTo}?error=missing`);
   }
 
   // Distance is the one free-typed decimal, and the field accepts either
@@ -150,7 +160,7 @@ export async function saveSessionAction(formData: FormData): Promise<void> {
   // sessionSchema would throw out of the action into an error page. Catch it
   // here and send back a message the member can act on instead.
   if (parseDecimal(String(distanceKmRaw)) === null) {
-    redirect('/session?error=distance');
+    redirect(`${backTo}?error=distance`);
   }
 
   const input = {
@@ -162,15 +172,22 @@ export async function saveSessionAction(formData: FormData): Promise<void> {
     servings: servingsFromForm(formData),
     note: formData.get('note') ?? undefined,
   };
-  await saveSession(prodDb, member, input, new Date(), await getCohortStartDate(prodDb));
+  await saveSession(prodDb, member, input, new Date(), await getCohortStartDate(prodDb), targetDate);
   revalidatePath('/today');
-  redirect('/today?saved=session');
+  revalidatePath('/history');
+  revalidatePath('/session');
+  revalidatePath('/day/[date]', 'page');
+  // A session logged from a past day returns to that day; today's returns to Today.
+  redirect(from === 'session' ? '/today?saved=session' : `${backTo}?saved=session`);
 }
 
 /** Server-action wrapper: edit one of the caller's own sessions from the edit route, then revalidate and redirect back to where the edit began. */
 export async function updateSessionAction(sessionId: string, formData: FormData): Promise<void> {
   const member = await requireMember();
   const from = String(formData.get('from') ?? 'history');
+  // `from` rides on a form field, so it is resolved against the known screens
+  // rather than interpolated into a path. An unchecked value is an open redirect.
+  const backTo = returnToPath(from);
 
   const sessionTypeRaw = formData.get('sessionType');
   const rpeRaw = formData.get('rpe');
@@ -180,10 +197,10 @@ export async function updateSessionAction(sessionId: string, formData: FormData)
   // Same coercion guard as saveSessionAction: reject incomplete submissions
   // before z.coerce turns missing fields into valid-looking zeros.
   if (!sessionTypeRaw || !rpeRaw || !durationMinRaw || !distanceKmRaw) {
-    redirect(`/session/${sessionId}/edit?error=missing&from=${from}`);
+    redirect(`/session/${sessionId}/edit?error=missing&from=${encodeURIComponent(from)}`);
   }
   if (parseDecimal(String(distanceKmRaw)) === null) {
-    redirect(`/session/${sessionId}/edit?error=distance&from=${from}`);
+    redirect(`/session/${sessionId}/edit?error=distance&from=${encodeURIComponent(from)}`);
   }
 
   const input = {
@@ -200,8 +217,9 @@ export async function updateSessionAction(sessionId: string, formData: FormData)
   revalidatePath('/today');
   revalidatePath('/history');
   revalidatePath('/session');
+  revalidatePath('/day/[date]', 'page');
 
-  redirect(`${from === 'session' ? '/session' : '/history'}?saved=session`);
+  redirect(`${backTo}?saved=session`);
 }
 
 /** Server-action wrapper: hard-delete one of the caller's own sessions (invoked inline from the Session/History lists), then revalidate. */
@@ -211,4 +229,5 @@ export async function deleteSessionAction(sessionId: string): Promise<void> {
   revalidatePath('/today');
   revalidatePath('/history');
   revalidatePath('/session');
+  revalidatePath('/day/[date]', 'page');
 }

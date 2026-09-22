@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 import { LoaderCircle, Pencil, Trash2 } from 'lucide-react';
 import { deleteSessionAction } from '@/app/(app)/session/actions';
+import type { SessionReturnTo } from '@/lib/returnTo';
 
 const ACTION_CLASS =
   'inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.06em] uppercase disabled:opacity-60';
@@ -42,10 +43,10 @@ function DeleteButton() {
 }
 
 /** Per-session Edit + Delete controls for the dark Session and History surfaces. */
-export function SessionRowActions({ sessionId, from }: { sessionId: string; from: 'session' | 'history' }) {
+export function SessionRowActions({ sessionId, from }: { sessionId: string; from: SessionReturnTo }) {
   return (
     <div className="mt-1.5 flex items-center gap-4">
-      <Link href={`/session/${sessionId}/edit?from=${from}`} className={`${ACTION_CLASS} text-wi-paper`}>
+      <Link href={`/session/${sessionId}/edit?from=${encodeURIComponent(from)}`} className={`${ACTION_CLASS} text-wi-paper`}>
         <Pencil className="size-3" />
         Edit
       </Link>

@@ -7,9 +7,10 @@ import { dailyCheckins, type Member } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { checkinSchema } from '@/lib/validation';
 import { parseHhMm } from '@/lib/duration';
-import { getPhase } from '@/lib/phase';
+import { assertLoggableDate } from '@/lib/logDate';
 import { localDateFor } from '@/lib/dates';
 import { COHORT_TIMEZONE, getCohortStartDate } from '@/lib/cohort';
+import { checkinScreenPath } from '@/lib/returnTo';
 import { requireMember } from '@/lib/session';
 
 type Schema = typeof schema;
@@ -24,22 +25,27 @@ type AnyPgDatabase = PgDatabase<PgQueryResultHKT, Schema>;
 // row. No cookies, no redirects; those live in the `saveCheckinAction` server
 // action below so this stays trivial to exercise against the pglite test
 // harness.
-export async function saveCheckin(db: AnyPgDatabase, member: Member, input: unknown, now: Date, startDate: string): Promise<void> {
+//
+// `targetDate` is the day being logged and defaults to today, which is the
+// 7 a.m. path. Passing an earlier day backfills a missed morning or corrects
+// an old one. `now` is then only the clock the guards compare against and the
+// updatedAt stamp; createdAt keeps recording the true write instant, which is
+// what makes a late entry visible to founders and to phase 2.
+export async function saveCheckin(
+  db: AnyPgDatabase,
+  member: Member,
+  input: unknown,
+  now: Date,
+  startDate: string,
+  targetDate: string = localDateFor(COHORT_TIMEZONE, now),
+): Promise<void> {
   const parsed = checkinSchema.parse(input);
-  const localDate = localDateFor(COHORT_TIMEZONE, now);
-
-  const { state } = getPhase(startDate, localDate);
-  if (state === 'pre') {
-    throw new Error('Cohort has not started yet');
-  }
-  if (state === 'complete') {
-    throw new Error('Protocol complete: check-ins are closed');
-  }
+  const { localDate, phase } = assertLoggableDate(targetDate, now, startDate, 'check-ins');
 
   const values = {
     memberId: member.id,
     localDate,
-    phase: state,
+    phase,
     recovery: parsed.recovery,
     restingHr: parsed.restingHr,
     // Explicit null, not undefined: this same object is the upsert's
@@ -64,8 +70,13 @@ export async function saveCheckin(db: AnyPgDatabase, member: Member, input: unkn
     });
 }
 
-export async function saveCheckinAction(formData: FormData): Promise<void> {
+/** Server-action wrapper: save or correct the caller's check-in for `targetDate`.
+ *  The date is a bound argument rather than a form field, and the core re-validates
+ *  it regardless. Errors and the save land back on whichever screen submitted. */
+export async function saveCheckinAction(targetDate: string, formData: FormData): Promise<void> {
   const member = await requireMember();
+  const today = localDateFor(COHORT_TIMEZONE, new Date());
+  const backTo = checkinScreenPath(targetDate, today);
 
   const recoveryRaw = formData.get('recovery');
   const restingHrRaw = formData.get('restingHr');
@@ -88,7 +99,7 @@ export async function saveCheckinAction(formData: FormData): Promise<void> {
     !hooperSorenessRaw ||
     !hooperStressRaw
   ) {
-    redirect('/checkin?error=1');
+    redirect(`${backTo}?error=1`);
   }
 
   // HRV is the one optional watch field. FormData gives null when the input is
@@ -103,7 +114,7 @@ export async function saveCheckinAction(formData: FormData): Promise<void> {
   // from a blank field and gets its own message on the form.
   const sleepMinutes = parseHhMm(String(sleepRaw));
   if (sleepMinutes === null) {
-    redirect('/checkin?error=sleep');
+    redirect(`${backTo}?error=sleep`);
   }
 
   const input = {
@@ -117,7 +128,14 @@ export async function saveCheckinAction(formData: FormData): Promise<void> {
     hooperStress: hooperStressRaw,
     note: formData.get('note') ?? undefined,
   };
-  await saveCheckin(prodDb, member, input, new Date(), await getCohortStartDate(prodDb));
+  await saveCheckin(prodDb, member, input, new Date(), await getCohortStartDate(prodDb), targetDate);
   revalidatePath('/today');
-  redirect('/today?saved=checkin');
+  revalidatePath('/history');
+  revalidatePath('/day/[date]', 'page');
+  // Backfilling returns to that day's hub, not History: the Sessions card is
+  // right there, showing whether the day still needs one. Landing on History
+  // instead is how a member saves a check-in and forgets the session they ran.
+  // targetDate is a validated calendar date by this point (saveCheckin threw
+  // otherwise), so it is safe to build a path from.
+  redirect(targetDate === today ? '/today?saved=checkin' : `/day/${targetDate}?saved=checkin`);
 }

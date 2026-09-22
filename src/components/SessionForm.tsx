@@ -1,4 +1,5 @@
 import { SESSION_TYPES } from '@/lib/validation';
+import type { SessionReturnTo } from '@/lib/returnTo';
 import { trimTrailingZeros } from '@/lib/decimal';
 import { DecimalField } from '@/components/DecimalField';
 import { NumberField } from '@/components/NumberField';
@@ -25,7 +26,7 @@ type SessionFormProps = {
   submitLabel: string;
   /** Label while the action is in flight. */
   pendingLabel?: string;
-  from?: 'session' | 'history';
+  from?: SessionReturnTo;
   existing?: SessionFormExisting;
 };
 

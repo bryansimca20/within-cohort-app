@@ -5,7 +5,9 @@ import { ArrowLeftIcon } from 'lucide-react';
 import { db } from '@/db/client';
 import { dailyCheckins, sessionLogs, members } from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
-import { groupByDate, formatDate, phaseLabel, servingsLabel, sessionTypeLabel } from '@/lib/history';
+import { buildLedger, groupByDate, formatDate, isLateEntry, phaseLabel, servingsLabel, sessionTypeLabel } from '@/lib/history';
+import { localDateFor } from '@/lib/dates';
+import { COHORT_TIMEZONE, getCohortStartDateOrNull } from '@/lib/cohort';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatHhMm } from '@/lib/duration';
@@ -32,7 +34,15 @@ export default async function AdminMemberPage({ params }: { params: Promise<{ id
     .where(eq(sessionLogs.memberId, id))
     .orderBy(desc(sessionLogs.localDate));
 
-  const days = groupByDate(checkins, sessions);
+  // Founders see the same ledger the member does: every protocol day, with the
+  // unlogged ones visible as gaps rather than inferred from missing rows. Before
+  // a start date is set there is no calendar to lay out, so fall back to the rows.
+  const startDate = await getCohortStartDateOrNull(db);
+  const groups = groupByDate(checkins, sessions);
+  const days = startDate
+    ? buildLedger(startDate, localDateFor(COHORT_TIMEZONE, new Date()), groups)
+    : groups.map((g) => ({ ...g, logged: true }));
+  const loggedCount = days.filter((d) => d.logged).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -49,7 +59,10 @@ export default async function AdminMemberPage({ params }: { params: Promise<{ id
           <dl className="flex items-center justify-between text-sm">
             <div>
               <dt className="text-wi-ink-500">Days logged</dt>
-              <dd className="mt-1 font-medium text-wi-black">{days.length}</dd>
+              <dd className="mt-1 font-medium text-wi-black">
+                {loggedCount}
+                {startDate ? <span className="text-wi-ink-500"> of {days.length}</span> : null}
+              </dd>
             </div>
             <div className="text-right">
               <dt className="text-wi-ink-500">In cohort</dt>
@@ -77,9 +90,17 @@ export default async function AdminMemberPage({ params }: { params: Promise<{ id
                   </Badge>
                 </div>
 
+                {!day.logged ? (
+                  <p className="mt-4 border-t border-wi-line pt-4 text-sm text-wi-ink-300">Not logged</p>
+                ) : (
                 <div className="mt-4 flex flex-col gap-4 border-t border-wi-line pt-4">
                   <div>
-                    <p className="text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">Check-in</p>
+                    <p className="text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">
+                      Check-in
+                      {day.checkin && isLateEntry(day.localDate, day.checkin.createdAt) && (
+                        <span className="ml-2 normal-case text-wi-ink-300">logged late</span>
+                      )}
+                    </p>
                     {day.checkin ? (
                       <p className="mt-1 text-sm leading-relaxed text-wi-black">
                         Recovery {day.checkin.recovery} · RHR {day.checkin.restingHr}
@@ -117,6 +138,7 @@ export default async function AdminMemberPage({ params }: { params: Promise<{ id
                     )}
                   </div>
                 </div>
+                )}
               </CardContent>
             </Card>
           ))}

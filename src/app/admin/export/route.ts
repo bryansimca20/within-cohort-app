@@ -6,6 +6,7 @@ import { dailyCheckins, sessionLogs, members } from '@/db/schema';
 import type * as schema from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
 import { toCsv } from '@/lib/csv';
+import { isLateEntry } from '@/lib/history';
 
 type Schema = typeof schema;
 // Any drizzle Postgres-family driver (postgres-js in prod, pglite in tests)
@@ -93,6 +94,9 @@ export function checkinRowsToCsvRows(rows: CheckinExportRow[]): Record<string, u
     hooper_stress: r.hooperStress,
     note: r.note,
     created_at: toIso(r.createdAt),
+    // Provenance, not analysis: says whether the numbers were captured on the
+    // morning they describe or recalled later, so phase 2 can weigh them.
+    logged_late: isLateEntry(r.localDate, new Date(toIso(r.createdAt))),
   }));
 }
 
@@ -145,6 +149,7 @@ export function sessionRowsToCsvRows(rows: SessionExportRow[]): Record<string, u
     servings: r.servings,
     note: r.note,
     created_at: toIso(r.createdAt),
+    logged_late: isLateEntry(r.localDate, new Date(toIso(r.createdAt))),
   }));
 }
 

@@ -109,3 +109,45 @@ test('rejects a distance that is only a separator', async () => {
   ).rejects.toThrow();
   expect(await db.select().from(sessionLogs)).toHaveLength(0);
 });
+
+// --- backfill ------------------------------------------------------------
+// A session trained on a missed day is still real training. Adding it later
+// must land on the day it happened, with that day's phase.
+
+test('backfills a session onto an earlier day and stamps that day\'s phase', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+  // now is 2026-08-20 Jakarta (day 19, within); the target is day 4, baseline
+  await saveSession(db, m, valid, new Date('2026-08-20T02:00:00Z'), START, '2026-08-05');
+  const rows = await db.select().from(sessionLogs);
+  expect(rows).toHaveLength(1);
+  expect(rows[0].localDate).toBe('2026-08-05');
+  expect(rows[0].phase).toBe('baseline');
+});
+
+// The contamination case. A baseline day has no product, so it can never carry
+// a serving count, no matter what the form sent or what phase today is.
+test('forces servings to null on a backfilled baseline day even while today is within', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+  await saveSession(db, m, { ...valid, servings: 2 }, new Date('2026-08-20T02:00:00Z'), START, '2026-08-05');
+  const rows = await db.select().from(sessionLogs);
+  expect(rows[0].servings).toBeNull();
+});
+
+test('keeps the serving count on a backfilled within day', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+  await saveSession(db, m, { ...valid, servings: 2 }, new Date('2026-08-25T02:00:00Z'), START, '2026-08-20');
+  const rows = await db.select().from(sessionLogs);
+  expect(rows[0].phase).toBe('within');
+  expect(rows[0].servings).toBe(2);
+});
+
+test('rejects a session on a day that has not happened yet', async () => {
+  const { db } = await makeTestDb();
+  const m = await seedMember(db);
+  await expect(
+    saveSession(db, m, valid, new Date('2026-08-20T02:00:00Z'), START, '2026-08-21'),
+  ).rejects.toThrow(/has not happened/i);
+});

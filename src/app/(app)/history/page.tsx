@@ -6,11 +6,12 @@ import { requireMember } from '@/lib/session';
 import { getCohortStartDateOrNull } from '@/lib/cohort';
 import { LayoutDashboard, LogOut } from 'lucide-react';
 import { getTodayStatus } from '@/lib/today';
-import { groupByDate } from '@/lib/history';
+import { buildLedger, groupByDate } from '@/lib/history';
 import { BASELINE_DAYS, WITHIN_DAYS } from '@/lib/phase';
 import { logout } from '@/app/login/actions';
 import { ClosedNotice } from '@/components/ClosedNotice';
 import { HistoryDayCard } from '@/components/HistoryDayCard';
+import { MissedDayRow } from '@/components/MissedDayRow';
 import { InstallCard } from '@/components/InstallCard';
 import { EnablePush } from '@/components/EnablePush';
 import { SendTestPushButton } from '@/components/SendTestPushButton';
@@ -37,7 +38,9 @@ export default async function HistoryPage() {
     .where(eq(sessionLogs.memberId, member.id))
     .orderBy(desc(sessionLogs.localDate));
 
-  const days = groupByDate(checkins, sessions);
+  // Every protocol day, logged or not: a missed morning is a row with a log
+  // affordance rather than an absence the member has to notice for themselves.
+  const days = buildLedger(startDate, status.localDate, groupByDate(checkins, sessions));
 
   const isWithin = status.phaseState === 'within' || status.phaseState === 'complete';
   const logged = isWithin ? status.withinLogged : status.baselineLogged;
@@ -62,25 +65,25 @@ export default async function HistoryPage() {
           </div>
         </div>
 
-        {days.length === 0 ? (
-          <p className="text-sm text-wi-on-dark-2">
-            No entries yet.{' '}
-            <Link href="/checkin" className="font-medium text-wi-paper underline">
-              Log today&apos;s check-in
-            </Link>
-          </p>
-        ) : (
-          <div className="flex flex-col gap-[10px]">
-            {days.map((day) => (
+        <div className="flex flex-col gap-[10px]">
+          {days.map((day) =>
+            day.logged ? (
               <HistoryDayCard
                 key={day.localDate}
                 day={day}
                 isToday={day.localDate === status.localDate}
                 editable={status.phaseState !== 'complete'}
               />
-            ))}
-          </div>
-        )}
+            ) : (
+              <MissedDayRow
+                key={day.localDate}
+                day={day}
+                isToday={day.localDate === status.localDate}
+                actionable={status.phaseState !== 'complete'}
+              />
+            ),
+          )}
+        </div>
 
         <div className="mt-2 flex flex-col gap-3 border-t border-wi-on-dark-line pt-5">
           <InstallCard />

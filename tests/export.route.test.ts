@@ -45,6 +45,7 @@ test('checkinRowsToCsvRows flattens to snake_case columns in the required order'
     'hooper_stress',
     'note',
     'created_at',
+    'logged_late',
   ]);
   expect(rows[0]).toMatchObject({
     member: 'Ana',
@@ -87,7 +88,7 @@ test('checkinRowsToCsvRows null note serializes as an empty CSV cell', () => {
   const cells = csv.split('\n')[1].split(',');
   expect(cells[header.indexOf('note')]).toBe('');
   expect(csv.split('\n')[0]).toBe(
-    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hhmm,sleep_minutes,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
+    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hhmm,sleep_minutes,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at,logged_late',
   );
 });
 
@@ -133,6 +134,7 @@ test('sessionRowsToCsvRows flattens to snake_case columns in the required order'
     'servings',
     'note',
     'created_at',
+    'logged_late',
   ]);
   expect(rows[0].servings).toBeNull();
   expect(rows[1].servings).toBe(2);
@@ -193,7 +195,7 @@ test('fetchCheckinExportRows joins member name and orders by member then date', 
   const csvRows = checkinRowsToCsvRows(rows);
   const csv = toCsv(csvRows);
   expect(csv.split('\n')[0]).toBe(
-    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hhmm,sleep_minutes,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at',
+    'member,local_date,phase,recovery,resting_hr,hrv_ms,sleep_hhmm,sleep_minutes,hooper_sleep,hooper_fatigue,hooper_soreness,hooper_stress,note,created_at,logged_late',
   );
   expect(csv).toContain('Amy,2026-08-01');
 });
@@ -242,4 +244,96 @@ test('checkinRowsToCsvRows null hrv_ms serializes as an empty CSV cell, never a 
   expect(rows[0].hrv_ms).toBeNull();
   const cells = toCsv(rows).split('\n')[1].split(',');
   expect(cells[5]).toBe('');
+});
+
+// --- provenance ------------------------------------------------------------
+// Backfill means a row's numbers can be recalled days after the morning they
+// describe. The export says which ones, so phase 2 can weigh them differently.
+
+test('checkinRowsToCsvRows marks a row written on its own day as not late', () => {
+  const rows = checkinRowsToCsvRows([
+    {
+      member: 'Ana',
+      localDate: '2026-08-01',
+      phase: 'baseline',
+      recovery: 72,
+      restingHr: 48,
+      hrvMs: null,
+      sleepMinutes: 450,
+      hooperSleep: 3,
+      hooperFatigue: 2,
+      hooperSoreness: 2,
+      hooperStress: 1,
+      note: null,
+      // 02:00 UTC is 09:00 Jakarta on the same date
+      createdAt: new Date('2026-08-01T02:00:00.000Z'),
+    },
+  ]);
+
+  expect(rows[0].logged_late).toBe(false);
+});
+
+test('checkinRowsToCsvRows marks a backfilled row as late', () => {
+  const rows = checkinRowsToCsvRows([
+    {
+      member: 'Ana',
+      localDate: '2026-08-01',
+      phase: 'baseline',
+      recovery: 72,
+      restingHr: 48,
+      hrvMs: null,
+      sleepMinutes: 450,
+      hooperSleep: 3,
+      hooperFatigue: 2,
+      hooperSoreness: 2,
+      hooperStress: 1,
+      note: null,
+      createdAt: new Date('2026-08-05T02:00:00.000Z'),
+    },
+  ]);
+
+  expect(rows[0].logged_late).toBe(true);
+});
+
+test('sessionRowsToCsvRows marks a backfilled session as late', () => {
+  const rows = sessionRowsToCsvRows([
+    {
+      member: 'Ana',
+      localDate: '2026-08-01',
+      phase: 'baseline',
+      sessionType: 'easy',
+      sessionTypeOther: null,
+      rpe: 5,
+      durationMin: 30,
+      distanceKm: '12.30',
+      servings: null,
+      note: null,
+      createdAt: new Date('2026-08-05T02:00:00.000Z'),
+    },
+  ]);
+
+  expect(rows[0].logged_late).toBe(true);
+});
+
+// The pglite driver hands back an ISO string where postgres-js hands back a
+// Date. The mapper normalises both, so the exported flag cannot depend on
+// which driver produced the row.
+test('sessionRowsToCsvRows resolves lateness from a driver-supplied ISO string', () => {
+  const rows = sessionRowsToCsvRows([
+    {
+      member: 'Ana',
+      localDate: '2026-08-01',
+      phase: 'baseline',
+      sessionType: 'easy',
+      sessionTypeOther: null,
+      rpe: 5,
+      durationMin: 30,
+      distanceKm: '12.30',
+      servings: null,
+      note: null,
+      createdAt: '2026-08-05T02:00:00.000Z' as unknown as Date,
+    },
+  ]);
+
+  expect(rows[0].logged_late).toBe(true);
 });

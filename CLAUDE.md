@@ -7,6 +7,8 @@ Protocol every day. It is the operational tool behind the deck in
 `../presentations/within-cohort-protocol-2026-07-20/`. Full spec and plan:
 
 - Spec: [docs/superpowers/specs/2026-07-23-within-cohort-log-design.md](docs/superpowers/specs/2026-07-23-within-cohort-log-design.md)
+- Backfill + past-log editing (supersedes the original edit policy):
+  [docs/superpowers/specs/2026-09-21-backfill-and-past-edit-design.md](docs/superpowers/specs/2026-09-21-backfill-and-past-edit-design.md)
 - Plan: `docs/superpowers/plans/2026-07-23-within-cohort-log.md` (gitignored, local only)
 
 **v1 is capture-only.** It reliably collects clean, baseline-anchored logs (a daily
@@ -86,12 +88,14 @@ src/
 │   ├── layout.tsx         # Root layout (Inter, globals, PWA meta)
 │   ├── globals.css        # Tailwind v4 import + WITHIN monochrome tokens
 │   ├── login/             # Passcode login page + login/logout actions
-│   ├── (app)/             # Runner area (guarded): today, checkin, session, history
+│   ├── (app)/             # Runner area (guarded): today, checkin, session, history, day
 │   │   ├── layout.tsx     # App shell (header, bottom nav) — standalone-PWA safe
 │   │   ├── today/         # page.tsx
 │   │   ├── checkin/       # page.tsx + actions.ts (saveCheckin core + wrapper)
 │   │   ├── session/       # page.tsx + actions.ts (saveSession core + wrapper)
-│   │   └── history/       # page.tsx
+│   │   ├── day/[date]/    # Earlier-day hub + guard.ts (shared window/date guard);
+│   │   │                  #   checkin/ and session/ sub-screens (see Edit policy)
+│   │   └── history/       # page.tsx — the full protocol ledger, gaps included
 │   ├── admin/             # Founder area (requireAdmin): dashboard, member/[id], members, export
 │   └── api/               # push/subscribe, cron/remind (route handlers)
 ├── components/
@@ -99,8 +103,9 @@ src/
 │   ├── brand/             # WITHIN brand mark (WithinLogo) — see WITHIN Design System
 │   └── *.tsx              # Composed feature components (forms, sliders, install card)
 ├── db/                    # schema.ts, client.ts (lazy Proxy)
-└── lib/                   # phase, dates, validation, session, passcode, streak, today,
-                           # csv, dashboard, history, rateLimit, push — pure/infra helpers
+└── lib/                   # phase, dates, logDate, validation, session, passcode, streak,
+                           # today, csv, dashboard, history, dayLabel, returnTo, rateLimit,
+                           # push — pure/infra helpers
 tests/                     # Vitest specs + helpers/testDb.ts (pglite harness)
 drizzle/                   # generated SQL migrations (committed)
 scripts/                   # seed.ts, gen-icons.mjs
@@ -307,12 +312,46 @@ identical.
   `COHORT_TIMEZONE` constant (`Asia/Jakarta`, in [src/lib/cohort.ts](src/lib/cohort.ts))
   via `localDateFor`. `localDate` is that calendar date. Never server-local time, never a
   per-member timezone.
-- **Edit policy.** Check-ins are same-local-day editable only. **Sessions** are
-  editable and deletable by their owner for the whole protocol window (they lock
-  when the protocol completes); a session's `localDate` and stamped `phase` never
-  change on edit, and `servings` follows the stored phase (baseline forces null).
-  Deletion is a hard delete. Still no backfill in v1 (a missed day is a visible
-  gap, not an invented row).
+- **Edit policy: any protocol day, until the protocol completes.** A member can log
+  and re-log **any** day from the cohort start date through today, from `/day/[date]`
+  (reached from a History row). Backfilling a missed morning and correcting an old one
+  are the same code path: `daily_checkins` upserts on `(member_id, local_date)`.
+  **Sessions** are likewise creatable on any past day, and editable/deletable by their
+  owner for the whole window; a session's `localDate` and stamped `phase` never change
+  on edit, and `servings` follows the stored phase (baseline forces null). Deletion is
+  a hard delete. Everything locks when the protocol completes: unfilled gaps freeze as
+  permanent gaps, since the end of the window is not a deadline extension.
+  - **The date is a parameter, never the clock.** `saveCheckin`/`saveSession` take a
+    trailing `targetDate` that defaults to today (the 7 a.m. path). `now` is only the
+    clock the guards compare against and the `updatedAt` stamp.
+  - **Phase stamps from the target date, never from today** — see Phase stamping. A
+    baseline day filled in during week five stores `baseline`, and therefore
+    `servings: null`. Stamping it `within` would contaminate the comparison the whole
+    protocol exists to produce. This is the load-bearing rule of backfill.
+  - All four guards live in [src/lib/logDate.ts](src/lib/logDate.ts)
+    (`assertLoggableDate`), called by both cores and by the `/day/[date]` page, never
+    in a form: a real calendar date, not in the future, inside the protocol window,
+    and nothing at all once the protocol is complete. A server action is reachable by
+    direct POST.
+  - **Provenance is derived, not stored.** `isLateEntry(localDate, createdAt)` in
+    [src/lib/history.ts](src/lib/history.ts) compares the Jakarta date of the write
+    instant against the day described. Surfaced as a "logged late" tag on History and
+    the admin drilldown, and as the `logged_late` CSV column. `createdAt` is never
+    rewritten by an upsert, so this survives every later edit. No schema column, no
+    audit trail: the row holds the current answer plus when it was first written.
+  - The redirect origin for a session edit (`from`) is resolved through
+    [src/lib/returnTo.ts](src/lib/returnTo.ts), never interpolated into a path. It
+    arrives on a form field; an unvalidated value there is an open redirect.
+  - **One screen per job, and the save has to land somewhere that shows what is left.**
+    An earlier day is a hub (`/day/[date]`) over two screens (`/day/[date]/checkin`,
+    `/day/[date]/session`), never one stacked page: "Save check-in" reads as the end of
+    a page, so a member saves and leaves and the session they ran is never logged.
+    Saving a past check-in returns to the **hub** (the Sessions card sits there in its
+    empty to-do state); logging a session returns to the **session screen**, so a second
+    session is a second submit. Today keeps its own screens and the guard redirects
+    `/day/<today>/*` to them. History labels each action (`Edit check-in`, `Add session`)
+    rather than sharing one generic "Edit": a capability reachable only through a
+    mislabelled link is a capability nobody finds.
 - **Auth.** Login is member-name select + a **4-digit passcode** (`generatePasscode` emits
   1000-9999). `members.passcode_hash` (bcrypt) is the **only** value login verifies
   against. `members.passcode_plain` stores the same code in the clear so a founder can

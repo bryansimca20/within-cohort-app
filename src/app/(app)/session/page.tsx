@@ -99,7 +99,7 @@ export default async function SessionPage({
             Log right after, while the numbers are fresh.
           </div>
 
-          <SessionForm action={saveSessionAction} showServingToggle={showServingToggle} submitLabel="Log session" from="session" />
+          <SessionForm action={saveSessionAction.bind(null, localDate)} showServingToggle={showServingToggle} submitLabel="Log session" from="session" />
         </div>
       </div>
     </div>
