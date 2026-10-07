@@ -1,10 +1,10 @@
-import Link from 'next/link';
 import { db } from '@/db/client';
 import { requireAdmin } from '@/lib/session';
-import { getCohortStartDateOrNull } from '@/lib/cohort';
-import { buildDashboard, type DashboardRow } from '@/lib/dashboard';
-import { BASELINE_DAYS, WITHIN_DAYS, phaseProgress } from '@/lib/phase';
-import { Badge } from '@/components/ui/badge';
+import { COHORT_TIMEZONE, getCohortStartDateOrNull } from '@/lib/cohort';
+import { buildActivity, QUIET_DAYS } from '@/lib/activity';
+import { localDateFor } from '@/lib/dates';
+import { BASELINE_DAYS, WITHIN_DAYS, getPhase, phaseProgress } from '@/lib/phase';
+import { ActivityCalendar } from '@/components/ActivityCalendar';
 import { SubmitButton } from '@/components/SubmitButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,17 +13,12 @@ import { EnablePush } from '@/components/EnablePush';
 import { SendTestPushButton } from '@/components/SendTestPushButton';
 import { updateCohortStartAction } from './actions';
 
-function phaseLabel(row: DashboardRow): string {
-  if (row.phaseState === 'pre') return 'Not started';
-  if (row.phaseState === 'baseline') {
-    const { day, total } = phaseProgress('baseline', row.dayIndex);
-    return `Baseline · Day ${day} / ${total}`;
-  }
-  if (row.phaseState === 'within') {
-    const { day, total } = phaseProgress('within', row.dayIndex);
-    return `On Within · Day ${day} / ${total}`;
-  }
-  return 'Complete';
+function phaseLabel(startDate: string, today: string): string {
+  const { state, dayIndex } = getPhase(startDate, today);
+  if (state === 'pre') return 'Not started';
+  if (state === 'complete') return 'Complete';
+  const { day, total } = phaseProgress(state, dayIndex);
+  return `${state === 'baseline' ? 'Baseline' : 'On Within'} · Day ${day} / ${total}`;
 }
 
 export default async function AdminDashboardPage({
@@ -40,6 +35,8 @@ export default async function AdminDashboardPage({
       <div>
         <h1 className="text-2xl font-semibold text-wi-black">Cohort</h1>
       </div>
+
+      {startDate ? <Dashboard startDate={startDate} /> : null}
 
       <Card>
         <CardContent className="flex flex-col gap-3">
@@ -89,66 +86,65 @@ export default async function AdminDashboardPage({
         </CardContent>
       </Card>
 
-      {startDate ? <Dashboard startDate={startDate} /> : null}
     </div>
   );
 }
 
-/** The founder dashboard proper: today's completion + per-member rows. Only rendered once a start date exists (buildDashboard needs it to compute each member's phase). */
+/** The founder dashboard proper: today's completion, who has gone quiet, and every member's logging across the protocol. Only rendered once a start date exists (buildActivity needs it to lay out the calendar). */
 async function Dashboard({ startDate }: { startDate: string }) {
-  const rows = await buildDashboard(db, new Date(), startDate);
+  const now = new Date();
+  const rows = await buildActivity(db, now, startDate);
   const total = rows.length;
   const checkedIn = rows.filter((r) => r.checkedInToday).length;
   const completionPct = total === 0 ? 0 : Math.round((checkedIn / total) * 100);
   const missing = rows.filter((r) => !r.checkedInToday);
+  const quiet = rows.filter((r) => r.daysQuiet >= QUIET_DAYS);
 
   return (
     <>
       <div>
         <h2 className="text-lg font-semibold text-wi-black">Today</h2>
         <p className="mt-1 text-sm text-wi-ink-500">
+          {phaseLabel(startDate, localDateFor(COHORT_TIMEZONE, now))}
+          <br />
           {checkedIn} / {total} checked in ({completionPct}%)
         </p>
       </div>
 
       <Card>
-        <CardContent>
-          <p className="text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">Missing today</p>
-          <p className="mt-1.5 text-sm font-medium leading-relaxed text-wi-black">
-            {missing.length === 0 ? 'Everyone has checked in.' : missing.map((r) => r.name).join(', ')}
-          </p>
+        <CardContent className="flex flex-col gap-4">
+          <div>
+            <p className="text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">Missing today</p>
+            <p className="mt-1.5 text-sm font-medium leading-relaxed text-wi-black">
+              {missing.length === 0 ? 'Everyone has checked in.' : missing.map((r) => r.name).join(', ')}
+            </p>
+          </div>
+          <div className="border-t border-wi-line pt-4">
+            <p className="text-2xs font-bold uppercase tracking-[0.14em] text-wi-ink-500">
+              No check-in for {QUIET_DAYS}+ days
+            </p>
+            <p className="mt-1.5 text-sm font-medium leading-relaxed text-wi-black">
+              {quiet.length === 0 ? 'Nobody.' : quiet.map((r) => `${r.name} (${r.daysQuiet})`).join(', ')}
+            </p>
+          </div>
         </CardContent>
       </Card>
+
+      <div>
+        <h2 className="text-lg font-semibold text-wi-black">Activity</h2>
+        <p className="mt-1 text-sm text-wi-ink-500">
+          Quietest first. Filled is a check-in, a dot is a session, the droplet count is servings logged that day.
+        </p>
+      </div>
 
       {total === 0 ? (
         <Card>
           <CardContent className="text-sm text-wi-ink-500">No members are currently in the cohort.</CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
           {rows.map((row) => (
-            <Link key={row.id} href={`/admin/member/${row.id}`}>
-              <Card className="transition-colors hover:bg-wi-mist/40">
-                <CardContent>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-wi-black">{row.name}</p>
-                    <Badge variant={row.checkedInToday ? 'default' : 'outline'}>
-                      {row.checkedInToday ? 'Checked in' : 'Not yet'}
-                    </Badge>
-                  </div>
-                  <dl className="mt-4 flex flex-col gap-2 border-t border-wi-line pt-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <dt className="text-wi-ink-500">Sessions today</dt>
-                      <dd className="font-medium text-wi-black">{row.sessionCount}</dd>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <dt className="text-wi-ink-500">Phase</dt>
-                      <dd className="font-medium text-wi-black">{phaseLabel(row)}</dd>
-                    </div>
-                  </dl>
-                </CardContent>
-              </Card>
-            </Link>
+            <ActivityCalendar key={row.id} member={row} startDate={startDate} totalDays={BASELINE_DAYS + WITHIN_DAYS} />
           ))}
         </div>
       )}

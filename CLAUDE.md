@@ -104,7 +104,7 @@ src/
 │   └── *.tsx              # Composed feature components (forms, sliders, install card)
 ├── db/                    # schema.ts, client.ts (lazy Proxy)
 └── lib/                   # phase, dates, logDate, validation, session, passcode, streak,
-                           # today, csv, dashboard, history, dayLabel, returnTo, rateLimit,
+                           # today, csv, activity, history, dayLabel, returnTo, rateLimit,
                            # push — pure/infra helpers
 tests/                     # Vitest specs + helpers/testDb.ts (pglite harness)
 drizzle/                   # generated SQL migrations (committed)
@@ -142,7 +142,7 @@ scripts/                   # seed.ts, gen-icons.mjs
   thin `"use server"` wrapper: `saveCheckin(db, member, input, now)` + `saveCheckinAction(formData)`.
   The core is unit-tested against pglite; the wrapper adds `requireMember()`/`requireAdmin()`,
   parses `FormData`, `revalidatePath`, `redirect`. This is the established pattern
-  (checkin/session/dashboard/export/members) — follow it for every new write.
+  (checkin/session/activity/export/members) — follow it for every new write.
 - Type the db param as `AnyPgDatabase = PgDatabase<PgQueryResultHKT, Schema>` (from
   `drizzle-orm/pg-core`) so both the prod client and a pglite test db type-check.
 - Wrappers **re-validate** and **reject missing/empty required fields** before coercion.
@@ -279,7 +279,7 @@ identical.
   [tests/helpers/testDb.ts](tests/helpers/testDb.ts) spins an in-memory Postgres and runs
   the real `drizzle/` migrations. Run `pnpm db:generate` before testing new schema.
 - **What to test:** pure logic and pure cores — `phase`, `dates`, `streak`, `validation`,
-  `csv`, `dashboard`, `history` grouping, and every `save*`/`*Rows`/`create*` db-param
+  `csv`, `activity`, `history` grouping, and every `save*`/`*Rows`/`create*` db-param
   core (insert/read/upsert behavior, phase stamping, guard rejections) against pglite.
   Tests must assert real inserted/returned data, not that a function was called.
 - **What not to test:** framework glue. Server-action wrappers, pages, and route handlers
