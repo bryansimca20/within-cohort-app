@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { Activity, Check, Clock, Pencil, Sunrise, Zap } from 'lucide-react';
+import { Activity, Check, Clock, Pencil, Sunrise, X, Zap } from 'lucide-react';
 import { db } from '@/db/client';
 import { requireMember } from '@/lib/session';
 import { getCohortStartDateOrNull } from '@/lib/cohort';
-import { getTodayStatus, type TodayStatus } from '@/lib/today';
-import { BASELINE_DAYS, WITHIN_DAYS, phaseProgress } from '@/lib/phase';
+import { getTodayStatus, type LedgerCell, type TodayStatus } from '@/lib/today';
+import { formatDate } from '@/lib/history';
+import { phaseProgress } from '@/lib/phase';
 import { EnablePush } from '@/components/EnablePush';
 import { cn } from '@/lib/utils';
 
@@ -21,42 +22,49 @@ function formatCohortStart(dateISO: string): string {
   });
 }
 
-/** Ledger cell fill: solid for already-logged days, an outlined ring on the active phase's next slot while it's still unlogged today, faint for the rest. */
-// Renders a count-based progress bar (fill order tracks how many are logged), not a per-calendar-day map.
-function ledgerCellClass(index: number, loggedCount: number, isActivePhase: boolean, checkinDone: boolean): string {
-  if (index < loggedCount) return 'bg-wi-paper';
-  if (isActivePhase && !checkinDone && index === loggedCount) return 'bg-transparent border-[1.5px] border-wi-paper';
-  return 'bg-wi-on-dark-fill';
+const cellBase = 'h-5 rounded-[3px]';
+
+/** One ledger day: solid when logged, a ring while today is still open, faint when upcoming, and a crossed cell linking to the backfill screen when missed. */
+function LedgerDayCell({ cell }: { cell: LedgerCell }) {
+  if (cell.state === 'missed') {
+    return (
+      <Link
+        href={`/day/${cell.localDate}`}
+        aria-label={`${formatDate(cell.localDate)}: not logged. Log this day`}
+        className={cn(cellBase, 'flex items-center justify-center border border-wi-on-dark-3 text-wi-paper')}
+      >
+        <X className="size-3" strokeWidth={2.5} />
+      </Link>
+    );
+  }
+  return (
+    <div
+      className={cn(
+        cellBase,
+        cell.state === 'logged' && 'bg-wi-paper',
+        cell.state === 'today' && 'border-[1.5px] border-wi-paper',
+        cell.state === 'upcoming' && 'bg-wi-on-dark-fill',
+      )}
+    />
+  );
 }
 
-/** One 7-wide ledger strip: a label row ("Baseline" / "logged / total") over a grid of day cells. */
-function Ledger({
-  label,
-  total,
-  logged,
-  isActivePhase,
-  checkinDone,
-}: {
-  label: string;
-  total: number;
-  logged: number;
-  isActivePhase: boolean;
-  checkinDone: boolean;
-}) {
+/** One ledger strip: a label row ("Baseline" / "logged / total") over a grid with one cell per protocol day. */
+function Ledger({ label, days }: { label: string; days: LedgerCell[] }) {
+  const logged = days.filter((d) => d.state === 'logged').length;
+  const missed = days.filter((d) => d.state === 'missed').length;
   return (
     <div className="mt-3">
       <div className="flex items-center justify-between border-b border-wi-on-dark-line pb-2">
         <span className="text-[10px] font-bold tracking-[0.14em] uppercase whitespace-nowrap">{label}</span>
         <span className="text-[10px] font-bold tracking-[0.1em] text-wi-on-dark-3 uppercase">
-          {logged} / {total} logged
+          {logged} / {days.length} logged
+          {missed > 0 && <span className="text-wi-paper"> · {missed} missed</span>}
         </span>
       </div>
       <div className="mt-[10px] grid grid-cols-14 gap-[4px]">
-        {Array.from({ length: total }, (_, i) => (
-          <div
-            key={i}
-            className={cn('h-5 rounded-[3px]', ledgerCellClass(i, logged, isActivePhase, checkinDone))}
-          />
+        {days.map((cell) => (
+          <LedgerDayCell key={cell.localDate} cell={cell} />
         ))}
       </div>
     </div>
@@ -192,20 +200,8 @@ export default async function TodayPage() {
         </div>
       </div>
 
-      <Ledger
-        label="Baseline"
-        total={BASELINE_DAYS}
-        logged={status.baselineLogged}
-        isActivePhase={status.phaseState === 'baseline'}
-        checkinDone={status.checkinDone}
-      />
-      <Ledger
-        label="Within"
-        total={WITHIN_DAYS}
-        logged={status.withinLogged}
-        isActivePhase={status.phaseState === 'within'}
-        checkinDone={status.checkinDone}
-      />
+      <Ledger label="Baseline" days={status.baselineDays} />
+      <Ledger label="Within" days={status.withinDays} />
 
       <div className="mt-4 border-t border-wi-on-dark-line">
         <div className="flex items-center gap-3 border-b border-wi-on-dark-line py-2.5">

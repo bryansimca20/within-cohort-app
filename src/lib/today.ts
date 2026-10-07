@@ -1,8 +1,9 @@
 import { eq, and } from 'drizzle-orm';
+import { addDays, format, parseISO } from 'date-fns';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { dailyCheckins, sessionLogs, type Member } from '@/db/schema';
 import type * as schema from '@/db/schema';
-import { getPhase, type PhaseState } from '@/lib/phase';
+import { BASELINE_DAYS, WITHIN_DAYS, getPhase, type PhaseState } from '@/lib/phase';
 import { localDateFor } from '@/lib/dates';
 import { COHORT_TIMEZONE } from '@/lib/cohort';
 import { computeStreak } from '@/lib/streak';
@@ -14,6 +15,10 @@ type Schema = typeof schema;
 // lets the pglite test harness pass a real db handle into this function.
 type AnyPgDatabase = PgDatabase<PgQueryResultHKT, Schema>;
 
+// One protocol day on the Today ledger. 'today' is today with no check-in yet;
+// once it is logged it reads 'logged' like any other day.
+export type LedgerCell = { localDate: string; state: 'logged' | 'missed' | 'today' | 'upcoming' };
+
 export type TodayStatus = {
   phaseState: PhaseState;
   dayIndex: number;
@@ -24,6 +29,8 @@ export type TodayStatus = {
   phaseComplete: boolean;
   baselineLogged: number;
   withinLogged: number;
+  baselineDays: LedgerCell[];
+  withinDays: LedgerCell[];
 };
 
 // Pure, testable core: given a db handle, the member, the "now" instant, and
@@ -64,6 +71,17 @@ export async function getTodayStatus(db: AnyPgDatabase, member: Member, now: Dat
     else if (s === 'within') withinLogged++;
   }
 
+  // One cell per calendar day of the protocol, so a missed morning stays on
+  // the day it happened instead of being absorbed into a running count.
+  const logged = new Set(checkinDates);
+  const start = parseISO(startDate);
+  const cells: LedgerCell[] = Array.from({ length: BASELINE_DAYS + WITHIN_DAYS }, (_, i) => {
+    const date = format(addDays(start, i), 'yyyy-MM-dd');
+    if (logged.has(date)) return { localDate: date, state: 'logged' };
+    if (date === localDate) return { localDate: date, state: 'today' };
+    return { localDate: date, state: date < localDate ? 'missed' : 'upcoming' };
+  });
+
   return {
     phaseState,
     dayIndex,
@@ -74,5 +92,7 @@ export async function getTodayStatus(db: AnyPgDatabase, member: Member, now: Dat
     phaseComplete: phaseState === 'complete',
     baselineLogged,
     withinLogged,
+    baselineDays: cells.slice(0, BASELINE_DAYS),
+    withinDays: cells.slice(BASELINE_DAYS),
   };
 }
