@@ -69,11 +69,13 @@ test('updateSession rejects a session owned by another member', async () => {
   expect(row.rpe).toBe(5);
 });
 
-test('updateSession rejects when the protocol is complete', async () => {
+test('updateSession still works once the protocol is complete', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
   const created = await seedSession(db, m, new Date('2026-08-15T02:00:00Z')); // within
-  await expect(updateSession(db, m, created.id, { ...valid, rpe: 9 }, new Date(AFTER_PROTOCOL), START)).rejects.toThrow(/complete/i);
+  await updateSession(db, m, created.id, { ...valid, rpe: 9 }, new Date(AFTER_PROTOCOL), START);
+  const [row] = await db.select().from(sessionLogs).where(eq(sessionLogs.id, created.id));
+  expect(row.rpe).toBe(9);
 });
 
 test('deleteSession removes the target row and leaves other sessions', async () => {
@@ -97,11 +99,11 @@ test('deleteSession rejects a session owned by another member', async () => {
   expect(rows).toHaveLength(1);
 });
 
-test('deleteSession rejects when the protocol is complete', async () => {
+test('deleteSession still works once the protocol is complete', async () => {
   const { db } = await makeTestDb();
   const m = await seedMember(db);
   const created = await seedSession(db, m, new Date('2026-08-15T02:00:00Z'));
-  await expect(deleteSession(db, m, created.id, new Date(AFTER_PROTOCOL), START)).rejects.toThrow(/complete/i);
+  await deleteSession(db, m, created.id, new Date(AFTER_PROTOCOL), START);
   const rows = await db.select().from(sessionLogs);
-  expect(rows).toHaveLength(1);
+  expect(rows).toHaveLength(0);
 });

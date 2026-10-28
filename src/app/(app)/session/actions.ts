@@ -69,8 +69,9 @@ export async function saveSession(
 // never re-homes a row to another day/phase), so this writes only the metric
 // columns. servings follows the row's STORED phase, not today's: a baseline
 // session can never record a serving even when edited during the within phase.
-// Rejects a row not owned by `member` and any edit once the protocol is
-// complete; the ownership + window guards live here (not just the UI) because
+// Rejects a row not owned by `member` and any edit before the cohort starts;
+// edits stay open after the protocol completes so late backfill can be
+// corrected. The ownership + window guards live here (not just the UI) because
 // the wrapper is reachable by direct POST.
 export async function updateSession(
   db: AnyPgDatabase,
@@ -84,7 +85,6 @@ export async function updateSession(
 
   const { state } = getPhase(startDate, localDateFor(COHORT_TIMEZONE, now));
   if (state === 'pre') throw new Error('Cohort has not started yet');
-  if (state === 'complete') throw new Error('Protocol complete: sessions are closed');
 
   const [row] = await db.select().from(sessionLogs).where(eq(sessionLogs.id, sessionId));
   if (!row || row.memberId !== member.id) throw new Error('Session not found');
@@ -117,7 +117,6 @@ export async function deleteSession(
 ): Promise<void> {
   const { state } = getPhase(startDate, localDateFor(COHORT_TIMEZONE, now));
   if (state === 'pre') throw new Error('Cohort has not started yet');
-  if (state === 'complete') throw new Error('Protocol complete: sessions are closed');
 
   const [row] = await db.select().from(sessionLogs).where(eq(sessionLogs.id, sessionId));
   if (!row || row.memberId !== member.id) throw new Error('Session not found');

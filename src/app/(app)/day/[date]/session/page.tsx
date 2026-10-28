@@ -34,9 +34,7 @@ export default async function DaySessionPage({
         message={
           screen.closed === 'no-start'
             ? 'Session logging opens once the cohort start date is set.'
-            : screen.closed === 'pre'
-              ? 'The protocol has not started yet. Nothing to log.'
-              : 'The protocol is complete. Your entries are locked.'
+            : 'The protocol has not started yet. Nothing to log.'
         }
       />
     );

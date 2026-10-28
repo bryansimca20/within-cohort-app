@@ -172,7 +172,7 @@ export default async function TodayPage() {
         name={name}
         eyebrow="Six weeks, logged"
         headline="Protocol complete"
-        body="Logging is closed and every entry is locked. Your history stays available to review."
+        body="Today's logging is closed. Missed a day? You can still fill it in from your history."
         action={
           <Link
             href="/history"

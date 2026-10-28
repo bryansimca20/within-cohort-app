@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { makeTestDb } from './helpers/testDb';
 import { members, dailyCheckins } from '@/db/schema';
 import { isLateEntry } from '@/lib/history';
@@ -139,11 +140,11 @@ test('rejects a malformed target date before it reaches a query', async () => {
   ).rejects.toThrow(/YYYY-MM-DD/);
 });
 
-// The end of the window is not a deadline extension: unfilled gaps freeze.
-test('rejects a backfill once the protocol is complete', async () => {
+// Closing the window leaves missed protocol days open for backfill.
+test('accepts a backfill once the protocol is complete', async () => {
   const { db } = await makeTestDb();
   const [m] = await db.insert(members).values({ name: 'Ana', passcodeHash: 'x', inCohort: true, isAdmin: false }).returning();
-  await expect(
-    saveCheckin(db, m, valid, new Date('2026-09-20T02:00:00Z'), START, '2026-08-05'),
-  ).rejects.toThrow(/complete/i);
+  await saveCheckin(db, m, valid, new Date('2026-09-20T02:00:00Z'), START, '2026-08-05');
+  const rows = await db.select().from(dailyCheckins).where(eq(dailyCheckins.memberId, m.id));
+  expect(rows.map((r) => [r.localDate, r.phase])).toEqual([['2026-08-05', 'baseline']]);
 });

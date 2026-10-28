@@ -42,7 +42,7 @@ export default async function CheckinPage({
         message={
           state === 'pre'
             ? 'Check-ins open on day one of the protocol. Nothing to log yet.'
-            : 'The protocol is complete. Check-ins are closed and your entries are locked.'
+            : 'The protocol is complete. Missed a morning? Fill it in from History.'
         }
       />
     );

@@ -39,7 +39,7 @@ export default async function SessionPage({
         message={
           state === 'pre'
             ? 'Session logging opens on day one of the protocol. Nothing to log yet.'
-            : 'The protocol is complete. Session logging is closed and your entries are locked.'
+            : 'The protocol is complete. Missed a session? Add it from History.'
         }
       />
     );

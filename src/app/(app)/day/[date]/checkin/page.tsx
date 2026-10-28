@@ -30,9 +30,7 @@ export default async function DayCheckinPage({
         message={
           screen.closed === 'no-start'
             ? 'Check-ins open once the cohort start date is set.'
-            : screen.closed === 'pre'
-              ? 'The protocol has not started yet. Nothing to log.'
-              : 'The protocol is complete. Your entries are locked.'
+            : 'The protocol has not started yet. Nothing to log.'
         }
       />
     );

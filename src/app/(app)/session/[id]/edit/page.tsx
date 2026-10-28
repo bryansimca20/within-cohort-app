@@ -31,17 +31,8 @@ export default async function EditSessionPage({
   }
 
   const state = getPhase(startDate, localDateFor(COHORT_TIMEZONE, new Date())).state;
-  if (state === 'pre' || state === 'complete') {
-    return (
-      <ClosedNotice
-        title="Edit session"
-        message={
-          state === 'pre'
-            ? 'The protocol has not started yet. Nothing to edit.'
-            : 'The protocol is complete. Your entries are locked and can no longer be edited.'
-        }
-      />
-    );
+  if (state === 'pre') {
+    return <ClosedNotice title="Edit session" message="The protocol has not started yet. Nothing to edit." />;
   }
 
   const [row] = await db

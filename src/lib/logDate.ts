@@ -8,8 +8,9 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 /**
  * Validates the day a member is writing to and resolves the phase to stamp on
  * it. Shared by the check-in and session cores so backfill obeys one set of
- * rules: a real calendar date, never in the future, inside the protocol window,
- * and nothing at all once the protocol completes. The phase comes from the
+ * rules: a real calendar date, never in the future, inside the protocol window.
+ * Closing the window does not close backfill: once the protocol completes,
+ * members can still fill the days they missed. The phase comes from the
  * target day, never from today, which is what keeps a baseline morning filled
  * in during the within phase out of the within data.
  *
@@ -28,11 +29,6 @@ export function assertLoggableDate(
 
   const today = localDateFor(COHORT_TIMEZONE, now);
 
-  // Checked before anything about the target day: when the window closes,
-  // every write closes with it and unfilled gaps stay gaps.
-  if (getPhase(startDate, today).state === 'complete') {
-    throw new Error(`Protocol complete: ${what} are closed`);
-  }
   if (targetDate > today) {
     throw new Error('Cannot log a day that has not happened yet');
   }
