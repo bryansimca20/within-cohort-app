@@ -9,7 +9,7 @@ import type { Member } from '@/db/schema';
 import type { Phase } from '@/lib/history';
 
 export type DayScreen =
-  | { closed: 'no-start' | 'pre' | 'complete' }
+  | { closed: 'no-start' | 'pre' }
   | { closed: null; member: Member; localDate: string; phase: Phase; startDate: string };
 
 /**
@@ -28,8 +28,8 @@ export async function loadDayScreen(date: string, todayPath = '/checkin'): Promi
   if (!startDate) return { closed: 'no-start' };
 
   const today = localDateFor(COHORT_TIMEZONE, new Date());
-  const todayState = getPhase(startDate, today).state;
-  if (todayState === 'pre' || todayState === 'complete') return { closed: todayState };
+  // A completed protocol stays open here so missed days can still be backfilled.
+  if (getPhase(startDate, today).state === 'pre') return { closed: 'pre' };
 
   let day: { localDate: string; phase: Phase } | null = null;
   try {

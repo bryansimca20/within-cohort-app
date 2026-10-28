@@ -40,13 +40,16 @@ test('rejects a date-shaped string that is not a real calendar date', () => {
   expect(() => assertLoggableDate('2026-02-31', NOW, START, 'check-ins')).toThrow(/YYYY-MM-DD/);
 });
 
-// The end of the window is not a deadline extension.
-test('rejects any write once the protocol is complete', () => {
+// Closing the window leaves missed protocol days open for backfill.
+test('accepts a protocol day once the protocol is complete', () => {
   const after = new Date('2026-09-20T02:00:00Z');
-  expect(() => assertLoggableDate('2026-08-05', after, START, 'check-ins')).toThrow(/complete/i);
+  expect(assertLoggableDate('2026-08-05', after, START, 'check-ins')).toEqual({
+    localDate: '2026-08-05',
+    phase: 'baseline',
+  });
 });
 
-test('names the caller in the completion message', () => {
+test('rejects a day past the protocol window, naming the caller', () => {
   const after = new Date('2026-09-20T02:00:00Z');
-  expect(() => assertLoggableDate('2026-08-05', after, START, 'sessions')).toThrow(/sessions are closed/i);
+  expect(() => assertLoggableDate('2026-09-20', after, START, 'sessions')).toThrow(/sessions are closed/i);
 });

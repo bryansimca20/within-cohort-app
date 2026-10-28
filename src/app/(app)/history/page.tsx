@@ -72,14 +72,13 @@ export default async function HistoryPage() {
                 key={day.localDate}
                 day={day}
                 isToday={day.localDate === status.localDate}
-                editable={status.phaseState !== 'complete'}
+                editable
               />
             ) : (
               <MissedDayRow
                 key={day.localDate}
                 day={day}
                 isToday={day.localDate === status.localDate}
-                actionable={status.phaseState !== 'complete'}
               />
             ),
           )}
